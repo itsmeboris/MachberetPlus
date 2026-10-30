@@ -1,0 +1,33 @@
+.image-editor-frame {
+  padding: 24px;
+}
+.image-editor-preview {
+  direction: ltr;
+}
+.image-editor-preview img {
+  border: 0;
+  border-radius: 0;
+}
+.image-editor-preview .image-corner {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: #1d4ed8;
+  color: white;
+  box-shadow: 0 0 0 2px #1d4ed8;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.image-editor-preview .image-corner:focus-visible {
+  outline: 4px solid #bd4c00;
+  outline-offset: 4px;
+}
+.image-editor-controls {
+  margin-top: 0;
+}

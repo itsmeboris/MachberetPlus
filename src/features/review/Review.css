@@ -1,0 +1,28 @@
+.review-page .math,
+.work-record .math {
+  unicode-bidi: isolate;
+  text-align: start;
+}
+.review-page .math-expression,
+.work-record .math-expression {
+  unicode-bidi: isolate;
+}
+.review-page .record-question h2 {
+  overflow-wrap: anywhere;
+}
+.review-feedback {
+  margin-block: 20px;
+}
+.review-feedback summary {
+  cursor: pointer;
+  padding-block: 12px;
+  font-weight: 600;
+}
+.review-feedback-fields {
+  margin-block: 12px;
+  padding: 16px;
+  min-width: 0;
+}
+.review-page textarea {
+  unicode-bidi: plaintext;
+}

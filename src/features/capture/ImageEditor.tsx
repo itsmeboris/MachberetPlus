@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { perspectiveMap, type Point } from "./geometry";
+import { useEffect, useId, useRef, useState, type PointerEvent } from "react";
+import { fullImageCorners, moveCorner, perspectiveMap } from "./geometry";
 import { ErrorMessage, useAction } from "../../components/Common";
+import "./ImageEditor.css";
 export async function canvasBlob(canvas: HTMLCanvasElement) {
   return new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
@@ -17,17 +18,41 @@ export function ImageEditor({
   url: string;
   onChange: (blob: Blob) => void;
 }) {
-  const [corners, setCorners] = useState<Point[]>([
-    { x: 0, y: 0 },
-    { x: 100, y: 0 },
-    { x: 100, y: 100 },
-    { x: 0, y: 100 },
-  ]);
+  const [corners, setCorners] = useState(fullImageCorners);
+  const [rotatedUrl, setRotatedUrl] = useState<string>();
+  const preview = useRef<HTMLDivElement>(null);
+  const helpId = useId();
+  useEffect(
+    () => () => {
+      if (rotatedUrl) URL.revokeObjectURL(rotatedUrl);
+    },
+    [rotatedUrl],
+  );
+  useEffect(() => {
+    setRotatedUrl(undefined);
+    setCorners(fullImageCorners());
+    setEditing(false);
+  }, [url]);
   const [editing, setEditing] = useState(false);
   const { run, error, busy } = useAction();
+  function reset() {
+    setRotatedUrl(undefined);
+    setCorners(fullImageCorners());
+  }
+  function drag(event: PointerEvent<HTMLButtonElement>, index: number) {
+    if (busy || !event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    const box = preview.current?.getBoundingClientRect();
+    if (!box?.width || !box.height) return;
+    setCorners((old) =>
+      moveCorner(old, index, {
+        x: ((event.clientX - box.left) / box.width) * 100,
+        y: ((event.clientY - box.top) / box.height) * 100,
+      }),
+    );
+  }
   async function transform(rotate: boolean) {
     const img = new Image();
-    img.src = url;
+    img.src = rotatedUrl ?? url;
     await img.decode();
     const source = document.createElement("canvas");
     source.width = img.naturalWidth;
@@ -91,76 +116,121 @@ export function ImageEditor({
         }
       out.getContext("2d")!.putImageData(dest, 0, 0);
     }
-    onChange(await canvasBlob(out));
-    setCorners([
-      { x: 0, y: 0 },
-      { x: 100, y: 0 },
-      { x: 100, y: 100 },
-      { x: 0, y: 100 },
-    ]);
-    setEditing(false);
+    const blob = await canvasBlob(out);
+    if (rotate) {
+      setRotatedUrl(URL.createObjectURL(blob));
+      // Rotate the current selection with the photograph and restore clockwise order.
+      setCorners((old) =>
+        [old[3], old[0], old[1], old[2]].map((p) => ({ x: 100 - p.y, y: p.x })),
+      );
+    } else {
+      onChange(blob);
+      reset();
+      setEditing(false);
+    }
   }
   return (
     <>
-      <div className="source-preview">
-        <img src={url} alt="דף המקור" />
-        {editing && (
-          <svg
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <polygon
-              points={corners.map((p) => `${p.x},${p.y}`).join(" ")}
-              fill="#1d4ed822"
-              stroke="#1d4ed8"
-              strokeWidth=".6"
-            />
-          </svg>
-        )}
+      <div className="image-editor-frame">
+        <div className="source-preview image-editor-preview" ref={preview}>
+          <img src={rotatedUrl ?? url} alt="דף המקור" draggable={false} />
+          {editing && (
+            <svg
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <polygon
+                points={corners.map((p) => `${p.x},${p.y}`).join(" ")}
+                fill="#1d4ed822"
+                stroke="#1d4ed8"
+                strokeWidth=".6"
+              />
+            </svg>
+          )}
+          {editing &&
+            corners.map((p, i) => (
+              <button
+                key={i}
+                type="button"
+                className="image-corner"
+                disabled={busy}
+                style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                aria-label={`פינה ${["שמאלית עליונה", "ימנית עליונה", "ימנית תחתונה", "שמאלית תחתונה"][i]}`}
+                aria-describedby={helpId}
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  event.currentTarget.focus();
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                }}
+                onPointerMove={(event) => drag(event, i)}
+                onPointerUp={(event) => {
+                  if (event.currentTarget.hasPointerCapture(event.pointerId))
+                    event.currentTarget.releasePointerCapture(event.pointerId);
+                }}
+                onKeyDown={(event) => {
+                  const directions: Record<string, [number, number]> = {
+                    ArrowLeft: [-1, 0],
+                    ArrowRight: [1, 0],
+                    ArrowUp: [0, -1],
+                    ArrowDown: [0, 1],
+                  };
+                  const direction = directions[event.key];
+                  if (!direction) return;
+                  event.preventDefault();
+                  const step = event.shiftKey ? 5 : 1;
+                  setCorners((old) =>
+                    moveCorner(old, i, {
+                      x: old[i].x + direction[0] * step,
+                      y: old[i].y + direction[1] * step,
+                    }),
+                  );
+                }}
+              >
+                <span aria-hidden="true">{i + 1}</span>
+              </button>
+            ))}
+        </div>
       </div>
       <div className="actions">
-        <button disabled={busy} onClick={() => run(() => transform(true))}>
-          ↻ סיבוב
-        </button>
-        <button onClick={() => setEditing(!editing)}>חיתוך ותיקון זווית</button>
+        {!editing && (
+          <button type="button" onClick={() => setEditing(true)}>
+            חיתוך וסיבוב התמונה
+          </button>
+        )}
       </div>
       {editing && (
-        <fieldset>
-          <legend>פינות הדף באחוזים — משמאל למעלה, בכיוון השעון</legend>
-          {corners.map((p, i) => (
-            <div className="corner-inputs" key={i}>
-              {(["x", "y"] as const).map((axis) => (
-                <label key={axis}>
-                  פינה {i + 1} · {axis}
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={p[axis]}
-                    onChange={(e) =>
-                      setCorners((old) =>
-                        old.map((c, n) =>
-                          n === i
-                            ? {
-                                ...c,
-                                [axis]: Math.max(
-                                  0,
-                                  Math.min(100, Number(e.target.value)),
-                                ),
-                              }
-                            : c,
-                        ),
-                      )
-                    }
-                  />
-                </label>
-              ))}
-            </div>
-          ))}
-          <button disabled={busy} onClick={() => run(() => transform(false))}>
-            החלת החיתוך והתיקון
-          </button>
+        <fieldset disabled={busy} className="image-editor-controls">
+          <legend>התאמת התמונה</legend>
+          <p id={helpId}>
+            גררו את ארבע הפינות אל קצות הדף. במקלדת: בחרו פינה בעזרת Tab והזיזו
+            אותה בעזרת החצים.
+          </p>
+          <p className="muted">השינויים יישמרו רק בלחיצה על שמירת התמונה.</p>
+          <div className="actions">
+            <button type="button" onClick={() => run(() => transform(true))}>
+              ↻ סיבוב ימינה
+            </button>
+            <button type="button" onClick={reset}>
+              איפוס השינויים
+            </button>
+            <button
+              type="button"
+              className="primary"
+              onClick={() => run(() => transform(false))}
+            >
+              שמירת התמונה
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                reset();
+                setEditing(false);
+              }}
+            >
+              ביטול
+            </button>
+          </div>
         </fieldset>
       )}
       <ErrorMessage error={error} />

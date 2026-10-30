@@ -41,11 +41,18 @@ test("teacher assigns, student saves and resumes, teacher reviews, parent acknow
   await page.reload();
   await page.getByRole("button", { name: "בדיקת העבודה" }).click();
   await expect(page.getByText("15", { exact: true })).toBeVisible();
-  await page.getByLabel("משוב כתוב").fill("כל הכבוד");
+  await expect(page.getByLabel("הערה כתובה")).toBeHidden();
+  await page
+    .getByText("הוספת הערה לתרגיל 1 (לא חובה)", { exact: true })
+    .click();
+  await page.getByLabel("הערה כתובה").fill("כל הכבוד");
   await page.context().grantPermissions(["microphone"]);
   await page.getByRole("button", { name: "הקלטת הודעה" }).click();
   await expect(
     page.getByRole("button", { name: "סיום הבדיקה" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "החזרה לתיקון", exact: true }),
   ).toBeDisabled();
   await expect(
     page.getByRole("button", { name: /עצירת ההקלטה/ }),

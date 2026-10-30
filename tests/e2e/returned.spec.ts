@@ -4,30 +4,25 @@ test("returned work exposes teacher corrections beside the editable answer", asy
   page,
   browser,
 }) => {
-  const { student, context, assignment, post } = await studentFixture(
-    page,
-    browser,
-  );
+  const { student, context } = await studentFixture(page, browser);
   await student.getByRole("button", { name: "התחל עבודה" }).click();
   await student.getByLabel("התשובה שלי", { exact: true }).fill("12");
   await expect(student.getByRole("status")).toHaveText("כל השינויים נשמרו");
   await student.getByRole("button", { name: "הגשה למורה" }).click();
   await expect(student.getByText("המחברת מחכה למשימה חדשה")).toBeVisible();
-  const review = await page.request.put(
-    `http://127.0.0.1:5173/api/assignments/${assignment.id}/review`,
-    {
-      headers: { Origin: "http://127.0.0.1:5173" },
-      data: {
-        contentRevision: 1,
-        feedback: { q: { text: "נסו לחבר עוד שלוש" } },
-      },
-    },
-  );
-  expect(review.status()).toBe(200);
-  await post(`/assignments/${assignment.id}/transition`, {
-    action: "return",
-    contentRevision: 2,
-  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "בדיקת העבודה" }).click();
+  await expect(
+    page.getByText("התלמיד יוכל לשנות תשובות ולהגיש שוב.", { exact: false }),
+  ).toBeVisible();
+  await page
+    .getByText("הוספת הערה לתרגיל 1 (לא חובה)", { exact: true })
+    .click();
+  await page.getByLabel("הערה כתובה").fill("נסו לחבר עוד שלוש");
+  await page.getByRole("button", { name: "החזרה לתיקון", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "הורדת העבודה והמשוב" }),
+  ).toBeVisible();
   await student.reload();
   await student.getByRole("button", { name: "המשך עבודה" }).click();
   await expect(

@@ -5,6 +5,8 @@ import { Audio, ErrorMessage, Panel, useAction } from "../../components/Common";
 import { AudioRecorder } from "../../components/AudioRecorder";
 import { WorkRecord } from "./WorkRecord";
 import { AnswerView } from "../../components/AnswerView";
+import { MathText } from "../../components/MathText";
+import "./Review.css";
 export function Review({
   assignment: initial,
   onBack,
@@ -21,6 +23,7 @@ export function Review({
   const audioPending = Object.values(pendingAudio).some(Boolean);
   const { run, busy, error } = useAction();
   async function finish(action: "review" | "return") {
+    if (busy || audioPending) return;
     const saved = await api(`/assignments/${a.id}/review`, "PUT", {
       feedback,
       contentRevision: a.contentRevision,
@@ -33,12 +36,14 @@ export function Review({
     );
   }
   return (
-    <>
-      <button onClick={onBack}>→ חזרה למשימות</button>
+    <div className="review-page" dir="rtl">
+      <button disabled={busy || audioPending} onClick={onBack}>
+        → חזרה למשימות
+      </button>
       <div className="page-heading">
         <div>
-          <p className="eyebrow">מילה טובה עושה הבדל</p>
-          <h1>בודקים וצומחים</h1>
+          <p className="eyebrow">בדיקת עבודת התלמיד</p>
+          <h1>בדיקת המשימה</h1>
           <p>
             {a.title} · {statuses[a.status]}
           </p>
@@ -46,72 +51,105 @@ export function Review({
       </div>
       {a.status === "submitted" ? (
         <Panel>
+          <p>
+            עברו על התשובות. אפשר להוסיף הערה לכל תרגיל, ואז לסיים את הבדיקה או
+            להחזיר לתלמיד לתיקון.
+          </p>
+          <p className="muted">
+            ההערות נשמרות כשמסיימים את הבדיקה או מחזירים לתיקון.
+          </p>
           {a.exercises.map((q, i) => (
             <article className="record-question" key={q.id}>
               <h2>
-                {i + 1}. {q.prompt}
+                תרגיל {i + 1}
+                {q.prompt && (
+                  <>
+                    {" "}
+                    · <bdi>{q.prompt}</bdi>
+                  </>
+                )}
               </h2>
               <p className="math" dir="ltr">
-                {q.math}
+                <MathText value={q.math} />
               </p>
               <AnswerView question={q} answer={a.answers[q.id]} />
-              <label>
-                משוב כתוב
-                <textarea
-                  value={feedback[q.id]?.text ?? ""}
-                  onChange={(e) =>
-                    setFeedback((f) => ({
-                      ...f,
-                      [q.id]: { ...f[q.id], text: e.target.value },
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                מדבקה
-                <select
-                  value={feedback[q.id]?.sticker ?? "star"}
-                  onChange={(e) =>
-                    setFeedback((f) => ({
-                      ...f,
-                      [q.id]: {
-                        ...f[q.id],
-                        sticker: e.target.value as Feedback["sticker"],
-                      },
-                    }))
-                  }
-                >
-                  <option value="star">☆ כל הכבוד</option>
-                  <option value="heart">♡ גאים בך</option>
-                  <option value="effort">✧ רואים את המאמץ</option>
-                </select>
-              </label>
-              <Audio id={feedback[q.id]?.audioId} />
-              <AudioRecorder
-                label={`הודעה קולית לתרגיל ${i + 1}`}
-                onPendingChange={(pending) =>
-                  setPendingAudio((previous) =>
-                    previous[q.id] === pending
-                      ? previous
-                      : { ...previous, [q.id]: pending },
-                  )
-                }
-                onSave={async (blob, duration) => {
-                  const audioId = await upload(
-                    a.id,
-                    blob,
-                    "feedback",
-                    duration,
-                    q.id,
-                  );
-                  setFeedback((f) => ({
-                    ...f,
-                    [q.id]: { ...f[q.id], audioId },
-                  }));
-                }}
-              />
+              <details className="review-feedback">
+                <summary>הוספת הערה לתרגיל {i + 1} (לא חובה)</summary>
+                <fieldset disabled={busy} className="review-feedback-fields">
+                  <legend>הערה לתלמיד</legend>
+                  <label>
+                    הערה כתובה
+                    <textarea
+                      dir="auto"
+                      value={feedback[q.id]?.text ?? ""}
+                      onChange={(e) =>
+                        setFeedback((f) => ({
+                          ...f,
+                          [q.id]: { ...f[q.id], text: e.target.value },
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    סימן עידוד
+                    <select
+                      value={feedback[q.id]?.sticker ?? ""}
+                      onChange={(e) =>
+                        setFeedback((f) => ({
+                          ...f,
+                          [q.id]: {
+                            ...f[q.id],
+                            sticker: (e.target.value ||
+                              undefined) as Feedback["sticker"],
+                          },
+                        }))
+                      }
+                    >
+                      <option value="">ללא סימן</option>
+                      <option value="star">☆ כל הכבוד</option>
+                      <option value="heart">♡ גאים בך</option>
+                      <option value="effort">✧ רואים את המאמץ</option>
+                    </select>
+                  </label>
+                  <Audio id={feedback[q.id]?.audioId} />
+                  <p className="muted">
+                    להערה קולית: הקליטו, עצרו ולחצו על שמירה בהקלטה. אחר כך
+                    סיימו את הבדיקה או החזירו לתיקון.
+                  </p>
+                  <AudioRecorder
+                    label={`הודעה קולית לתרגיל ${i + 1}`}
+                    onPendingChange={(pending) =>
+                      setPendingAudio((previous) =>
+                        previous[q.id] === pending
+                          ? previous
+                          : { ...previous, [q.id]: pending },
+                      )
+                    }
+                    onSave={async (blob, duration) => {
+                      const audioId = await upload(
+                        a.id,
+                        blob,
+                        "feedback",
+                        duration,
+                        q.id,
+                      );
+                      setFeedback((f) => ({
+                        ...f,
+                        [q.id]: { ...f[q.id], audioId },
+                      }));
+                    }}
+                  />
+                </fieldset>
+              </details>
             </article>
           ))}
+          <p>
+            <strong>סיום הבדיקה:</strong> המשימה תסומן כנבדקה, והתלמיד יוכל
+            לראות את ההערות.
+          </p>
+          <p>
+            <strong>החזרה לתיקון:</strong> התלמיד יוכל לשנות תשובות ולהגיש שוב.
+          </p>
           <div className="actions">
             <button
               className="primary"
@@ -124,7 +162,7 @@ export function Review({
               disabled={busy || audioPending}
               onClick={() => run(() => finish("return"))}
             >
-              החזרה לניסיון נוסף
+              החזרה לתיקון
             </button>
           </div>
           {audioPending && (
@@ -137,7 +175,7 @@ export function Review({
       <ErrorMessage error={error} />
       {["reviewed", "parent_acknowledged"].includes(a.status) && (
         <Panel>
-          <h2>ממשיכים את ההצלחה בבית</h2>
+          <h2>שיתוף העבודה עם ההורה</h2>
           <p>
             {a.acknowledgedAt
               ? `עברו יחד בבית · ${new Date(a.acknowledgedAt).toLocaleString("he-IL")}`
@@ -196,6 +234,6 @@ export function Review({
           </button>
         </Panel>
       )}
-    </>
+    </div>
   );
 }
