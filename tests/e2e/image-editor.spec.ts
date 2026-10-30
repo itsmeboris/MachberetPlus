@@ -7,7 +7,7 @@ test("image corners support drag and keyboard; cancel restores source and apply 
 }) => {
   const { context } = await studentFixture(page, browser);
   await page.goto("/");
-  await page.getByRole("button", { name: "משימה חדשה", exact: true }).click();
+  await page.getByRole("button", { name: "משימה חדשה" }).click();
   await page
     .locator('input[type="file"]')
     .first()

@@ -9,7 +9,13 @@ export type Actor = {
   preferences: string;
 };
 export type Env = {
-  Bindings: { DB: D1Database; ASSETS?: Fetcher };
+  Bindings: {
+    DB: D1Database;
+    ASSETS?: Fetcher;
+    AI?: {
+      run(model: string, input: Record<string, unknown>): Promise<unknown>;
+    };
+  };
   Variables: { actor: Actor };
 };
 export type Ctx = Context<Env>;
@@ -39,6 +45,9 @@ export function teacher(c: Ctx) {
   return a;
 }
 export interface AssignmentRow {
+  prepared_distribution_id?: string | null;
+  distribution_id: string | null;
+  classroom_id: string | null;
   content_revision: number;
   id: string;
   teacher_id: string;
@@ -68,6 +77,9 @@ export async function assignment(c: Ctx, id: string): Promise<AssignmentRow> {
 }
 export function present(a: AssignmentRow) {
   return {
+    preparedDistributionId: a.prepared_distribution_id ?? null,
+    distributionId: a.distribution_id ?? null,
+    classroomId: a.classroom_id ?? null,
     contentRevision: a.content_revision,
     id: a.id,
     studentId: a.student_id,

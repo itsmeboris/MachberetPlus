@@ -14,6 +14,9 @@ export type Feedback = {
   audioId?: string;
 };
 export type Assignment = {
+  preparedDistributionId?: string | null;
+  distributionId?: string | null;
+  classroomId?: string | null;
   contentRevision: number;
   id: string;
   studentId: string;

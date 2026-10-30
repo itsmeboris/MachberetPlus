@@ -4,9 +4,14 @@ export async function studentFixture(
   browser: Browser,
   kind = "arithmetic",
 ) {
+  // Separate synthetic clients; production rate limiting stays unchanged.
+  const testClientIP = `192.0.2.${Math.floor(Math.random() * 250) + 1}`;
   const post = async (path: string, data: unknown) => {
     const r = await page.request.post(`http://127.0.0.1:5173/api${path}`, {
-      headers: { Origin: "http://127.0.0.1:5173" },
+      headers: {
+        Origin: "http://127.0.0.1:5173",
+        "CF-Connecting-IP": testClientIP,
+      },
       data,
     });
     if (!r.ok()) throw new Error(await r.text());

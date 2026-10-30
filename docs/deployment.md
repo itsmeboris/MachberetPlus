@@ -1,6 +1,6 @@
 # Persistent deployment
 
-The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All five migrations are applied. Verified version: `a9c53f07-0bf2-4aad-9a5f-b94099be951f` (2026-10-30). HTTPS and the live acceptance suite pass. The initial subdomain TLS provisioning delay resolved without changing application code.
+The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All six migrations are applied. Verified version: `d54f67bc-72e8-45a8-81bd-35cfda628c49` (2026-10-30). The classroom, handwriting-photo and full worksheet live acceptance tests pass. The initial subdomain TLS provisioning delay resolved without changing application code.
 
 Source repository: https://github.com/itsmeboris/MachberetPlus.
 
@@ -41,5 +41,6 @@ On actual Android devices open the HTTPS URL in Chrome and use install/add-to-ho
 - Student/account deletion cascades through associated work, media and access. Downloaded copies and provider backups require separate retention handling.
 - Sessions last seven days. Password reset and managed school identity are not implemented; agree an account-recovery procedure before onboarding.
 - OCR downloads runtime/language data on first use; worksheet recognition itself runs locally. First use needs network access.
+- The above local OCR applies to printed-page mode. Photo/handwriting mode sends the explicitly approved image to the `AI` binding on Cloudflare Workers AI. Provider quotas apply; no provider secret is shipped to the browser. Local development uses the same remote AI service if this option is selected.
 - Shell caching is not complete offline account support. An open workbook retains unsent answers locally, with retry and explicit conflict resolution; cold offline reload cannot authenticate.
 - Do not log capability tokens, cookies, worksheet bodies or recordings. Plan storage capacity and retention before expanding beyond the pilot.

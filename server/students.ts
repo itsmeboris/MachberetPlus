@@ -33,7 +33,7 @@ students.post("/", async (c) => {
     c.env.DB.prepare("INSERT INTO pairing_codes VALUES (?,?,?)").bind(
       await hash(code),
       id,
-      Date.now() + 900000,
+      Date.now() + 7 * 86400000,
     ),
   ]);
   return c.json({ id, name: data.name, code }, 201);
@@ -53,7 +53,7 @@ students.post("/:id/pair", async (c) => {
     c.env.DB.prepare("INSERT INTO pairing_codes VALUES (?,?,?)").bind(
       await hash(code),
       id,
-      Date.now() + 900000,
+      Date.now() + 7 * 86400000,
     ),
   ]);
   return c.json({ code });
@@ -76,4 +76,18 @@ export const preferences = z.object({
   fontScale: z.number().min(1).max(2).default(1),
   switchNext: z.enum(["Space", "ArrowRight", "F1"]).default("Space"),
   switchSelect: z.enum(["Enter", "F2"]).default("Enter"),
+});
+students.delete("/:id/pairing", async (c) => {
+  const a = teacher(c),
+    id = c.req.param("id");
+  if (
+    !(await c.env.DB.prepare("SELECT id FROM users WHERE id=? AND teacher_id=?")
+      .bind(id, a.id)
+      .first())
+  )
+    fail(404, "התלמיד לא נמצא");
+  await c.env.DB.prepare("DELETE FROM pairing_codes WHERE student_id=?")
+    .bind(id)
+    .run();
+  return c.json({ ok: true });
 });

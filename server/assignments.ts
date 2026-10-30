@@ -33,7 +33,7 @@ assignments.get("/", async (c) => {
   const a = c.get("actor");
   const sql =
     a.role === "teacher"
-      ? "SELECT * FROM assignments WHERE teacher_id=? ORDER BY updated_at DESC"
+      ? "SELECT a.*,d.id AS prepared_distribution_id FROM assignments a LEFT JOIN distributions d ON d.assignment_id=a.id WHERE a.teacher_id=? ORDER BY a.updated_at DESC"
       : "SELECT * FROM assignments WHERE student_id=? AND status != 'draft' ORDER BY created_at";
   return c.json(
     (await c.env.DB.prepare(sql).bind(a.id).all<AssignmentRow>()).results.map(
@@ -47,6 +47,7 @@ assignments.post("/", async (c) => {
     c,
     z.object({
       studentId: z.string(),
+      classroomId: z.string().nullable().optional(),
       title: z.string().trim().min(1).max(120),
       exercises: z
         .array(exercise)
@@ -60,10 +61,19 @@ assignments.post("/", async (c) => {
       .first())
   )
     fail(404, "התלמיד לא נמצא");
+  if (
+    data.classroomId &&
+    !(await c.env.DB.prepare(
+      "SELECT id FROM classrooms WHERE id=? AND teacher_id=?",
+    )
+      .bind(data.classroomId, a.id)
+      .first())
+  )
+    fail(404, "הכיתה לא נמצאה");
   const id = crypto.randomUUID(),
     now = Date.now();
   await c.env.DB.prepare(
-    "INSERT INTO assignments (id,teacher_id,student_id,title,exercises,created_at,updated_at) VALUES (?,?,?,?,?,?,?)",
+    "INSERT INTO assignments (id,teacher_id,student_id,title,exercises,created_at,updated_at,classroom_id) VALUES (?,?,?,?,?,?,?,?)",
   )
     .bind(
       id,
@@ -73,6 +83,7 @@ assignments.post("/", async (c) => {
       JSON.stringify(data.exercises),
       now,
       now,
+      data.classroomId ?? null,
     )
     .run();
   return c.json(present(await assignment(c, id)), 201);
@@ -81,13 +92,14 @@ assignments.get("/:id", async (c) =>
   c.json(present(await assignment(c, c.req.param("id")))),
 );
 assignments.patch("/:id", async (c) => {
-  teacher(c);
+  const actor = teacher(c);
   const row = await assignment(c, c.req.param("id"));
   if (row.status !== "draft") fail(409, "אפשר לערוך רק טיוטה");
   const data = await input(
     c,
     z.object({
       title: z.string().trim().min(1).max(120).optional(),
+      classroomId: z.string().nullable().optional(),
       exercises: exercises.optional(),
       confirmed: z.boolean().optional(),
       contentRevision: z.number().int().nonnegative(),
@@ -95,14 +107,26 @@ assignments.patch("/:id", async (c) => {
   );
   if (data.confirmed && !JSON.parse(row.exercises).length)
     fail(400, "יש להכין תרגילים לפני האישור");
+  if (
+    data.classroomId &&
+    !(await c.env.DB.prepare(
+      "SELECT id FROM classrooms WHERE id=? AND teacher_id=?",
+    )
+      .bind(data.classroomId, actor.id)
+      .first())
+  )
+    fail(404, "הכיתה לא נמצאה");
   const result = await c.env.DB.prepare(
-    "UPDATE assignments SET title=?,exercises=?,confirmed=?,updated_at=?,content_revision=content_revision+1 WHERE id=? AND status=? AND content_revision=?",
+    "UPDATE assignments SET title=?,exercises=?,confirmed=?,updated_at=?,classroom_id=?,content_revision=content_revision+1 WHERE id=? AND status=? AND content_revision=?",
   )
     .bind(
       data.title ?? row.title,
       data.exercises ? JSON.stringify(data.exercises) : row.exercises,
       data.exercises ? 0 : Number(data.confirmed ?? !!row.confirmed),
       Date.now(),
+      data.classroomId === undefined
+        ? (row.classroom_id ?? null)
+        : data.classroomId,
       row.id,
       "draft",
       data.contentRevision,
@@ -323,4 +347,105 @@ parent.post("/:token/acknowledge", async (c) => {
     .bind(row.id)
     .first<{ acknowledged_at: number }>();
   return c.json({ acknowledgedAt: saved!.acknowledged_at });
+});
+
+// A distribution snapshots both the roster and media in one atomic D1 batch.
+// Copies keep per-student permissions and survive deletion of the preparation draft.
+assignments.post("/:id/distribute", async (c) => {
+  const actor = teacher(c),
+    row = await assignment(c, c.req.param("id"));
+  const data = await input(
+    c,
+    z.object({
+      classroomId: z.string(),
+      contentRevision: z.number().int().nonnegative(),
+    }),
+  );
+  if (
+    !(await c.env.DB.prepare(
+      "SELECT id FROM classrooms WHERE id=? AND teacher_id=?",
+    )
+      .bind(data.classroomId, actor.id)
+      .first())
+  )
+    fail(404, "הכיתה לא נמצאה");
+  const summary = async () => {
+    const d = await c.env.DB.prepare(
+      "SELECT id,classroom_id,assignment_id,content_revision FROM distributions WHERE assignment_id=?",
+    )
+      .bind(row.id)
+      .first<{
+        id: string;
+        classroom_id: string;
+        assignment_id: string;
+        content_revision: number;
+      }>();
+    if (!d) return null;
+    if (
+      d.classroom_id !== data.classroomId ||
+      d.content_revision !== data.contentRevision
+    )
+      fail(409, "המשימה כבר נשלחה. יש להכין משימה חדשה לשליחה נוספת.");
+    const items = (
+      await c.env.DB.prepare(
+        "SELECT id,student_id AS studentId FROM assignments WHERE distribution_id=? ORDER BY student_id",
+      )
+        .bind(d.id)
+        .all()
+    ).results;
+    return {
+      id: d.id,
+      classroomId: d.classroom_id,
+      assignmentId: d.assignment_id,
+      assignments: items,
+      count: items.length,
+    };
+  };
+  const previous = await summary();
+  if (previous) return c.json(previous);
+  if (row.status !== "draft") fail(409, "אפשר לשלוח לכיתה רק טיוטה");
+  if (!row.confirmed || !JSON.parse(row.exercises).length)
+    fail(400, "יש לאשר את התרגילים לפני השליחה");
+  if (row.content_revision !== data.contentRevision)
+    fail(409, "הטיוטה השתנתה. יש לטעון אותה מחדש.");
+  if (
+    !(await c.env.DB.prepare(
+      "SELECT student_id FROM classroom_students WHERE classroom_id=? LIMIT 1",
+    )
+      .bind(data.classroomId)
+      .first())
+  )
+    fail(400, "יש להוסיף תלמידים לכיתה");
+  const id = crypto.randomUUID(),
+    now = Date.now();
+  const statements = [
+    c.env.DB.prepare(
+      `INSERT OR IGNORE INTO distributions SELECT ?,?,?,?,? WHERE EXISTS (SELECT 1 FROM assignments WHERE id=? AND teacher_id=? AND status='draft' AND confirmed=1 AND content_revision=?)`,
+    ).bind(
+      id,
+      data.classroomId,
+      row.id,
+      data.contentRevision,
+      now,
+      row.id,
+      actor.id,
+      data.contentRevision,
+    ),
+    c.env.DB.prepare(
+      `INSERT INTO assignments (id,teacher_id,student_id,title,status,exercises,confirmed,created_at,updated_at,distribution_id,classroom_id) SELECT lower(hex(randomblob(16))),a.teacher_id,cs.student_id,a.title,'assigned',a.exercises,1,?,?,d.id,d.classroom_id FROM distributions d JOIN assignments a ON a.id=d.assignment_id JOIN classroom_students cs ON cs.classroom_id=d.classroom_id JOIN users u ON u.id=cs.student_id AND u.teacher_id=a.teacher_id WHERE d.id=?`,
+    ).bind(now, now, id),
+    c.env.DB.prepare(
+      `INSERT INTO media (id,assignment_id,kind,mime,size,duration,question_id,complete,base_revision) SELECT child.id || '-' || m.kind,child.id,m.kind,m.mime,m.size,m.duration,m.question_id,1,0 FROM assignments child JOIN distributions d ON d.id=child.distribution_id JOIN assignments source ON source.id=d.assignment_id JOIN media m ON m.id IN (source.source_id,source.instructions_id) AND m.assignment_id=source.id AND m.complete=1 AND m.kind IN ('source','instructions') WHERE d.id=?`,
+    ).bind(id),
+    c.env.DB.prepare(
+      `INSERT INTO media_chunks (media_id,part,data) SELECT child.id || '-' || m.kind,mc.part,mc.data FROM assignments child JOIN distributions d ON d.id=child.distribution_id JOIN assignments source ON source.id=d.assignment_id JOIN media m ON m.id IN (source.source_id,source.instructions_id) AND m.assignment_id=source.id AND m.complete=1 AND m.kind IN ('source','instructions') JOIN media_chunks mc ON mc.media_id=m.id WHERE d.id=?`,
+    ).bind(id),
+    c.env.DB.prepare(
+      `UPDATE assignments SET source_id=(SELECT id FROM media WHERE assignment_id=assignments.id AND kind='source'),instructions_id=(SELECT id FROM media WHERE assignment_id=assignments.id AND kind='instructions') WHERE distribution_id=?`,
+    ).bind(id),
+  ];
+  await c.env.DB.batch(statements);
+  const result = await summary();
+  if (!result) fail(409, "הטיוטה השתנתה. יש לטעון אותה מחדש.");
+  return c.json(result, 201);
 });

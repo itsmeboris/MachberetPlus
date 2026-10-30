@@ -8,6 +8,8 @@ import { type Env, input, teacher } from "./database";
 import { media, parentMedia } from "./media";
 import { pilot } from "./pilot";
 import { capture } from "./capture";
+import { recognition } from "./recognition";
+import { classrooms } from "./classrooms";
 const app = new Hono<Env>();
 app.use("/api/*", async (c, next) => {
   c.header("Cache-Control", "no-store");
@@ -36,6 +38,8 @@ app.use("/api/*", async (c, next) => {
   await next();
 });
 app.route("/api/students", students);
+app.route("/api/classrooms", classrooms);
+app.route("/api/recognition", recognition);
 app.route("/api/assignments", assignments);
 app.route("/api/media", media);
 app.route("/api/pilot", pilot);

@@ -7,6 +7,7 @@ test("uploads a real Hebrew worksheet and preserves its source after saving", as
   const { context } = await studentFixture(page, browser);
   await page.goto("/");
   await page.getByRole("button", { name: "משימה חדשה" }).click();
+  await page.getByLabel("אופן הזיהוי").selectOption("local");
   await page
     .locator("input[type=file]")
     .first()
@@ -38,6 +39,7 @@ test("recognizes printed Hebrew and math locally for adult correction", async ({
   const { context } = await studentFixture(page, browser);
   await page.goto("/");
   await page.getByRole("button", { name: "משימה חדשה" }).click();
+  await page.getByLabel("אופן הזיהוי").selectOption("local");
   await page
     .locator("input[type=file]")
     .first()
@@ -63,6 +65,7 @@ test("a parent sends a photographed page into a teacher draft without an account
   test.setTimeout(180000);
   const { context } = await studentFixture(page, browser);
   await page.goto("/");
+  await page.getByText(/קישורי כניסה וניהול תלמידים/).click();
   await page.getByRole("button", { name: "בקשת צילום מהורה" }).click();
   const link = await page.getByLabel("קישור לצילום בבית").inputValue();
   const parentContext = await browser.newContext();
@@ -76,6 +79,7 @@ test("a parent sends a photographed page into a teacher draft without an account
   await expect(parent.getByRole("status")).toContainText("הדף נשלח למורה");
   await page.reload();
   await page.getByRole("button", { name: "המשך הכנה" }).click();
+  await page.getByLabel("אופן הזיהוי").selectOption("local");
   await expect(page.getByAltText("דף המקור")).toHaveAttribute(
     "src",
     /\/api\/media\//,

@@ -24,6 +24,7 @@ test("live scanned worksheet, voice feedback, acknowledgement, redeploy persiste
   await page.getByRole("button", { name: "שמירת התלמיד" }).click();
   const pair = await page.getByLabel("קישור כניסה לתלמיד").inputValue();
   await page.getByRole("button", { name: "משימה חדשה" }).click();
+  await page.getByLabel("אופן הזיהוי").selectOption("local");
   await page
     .locator("input[type=file]")
     .first()
@@ -60,7 +61,8 @@ test("live scanned worksheet, voice feedback, acknowledgement, redeploy persiste
   await page.reload();
   await page.getByRole("button", { name: "בדיקת העבודה" }).click();
   await expect(page.getByText("15", { exact: true })).toBeVisible();
-  await page.getByLabel("משוב כתוב").fill("כל הכבוד");
+  await page.getByText("הוספת הערה לתרגיל 1 (לא חובה)").click();
+  await page.getByLabel("הערה כתובה").fill("כל הכבוד");
   await page.context().grantPermissions(["microphone"]);
   await page.getByRole("button", { name: "הקלטת הודעה" }).click();
   await expect(

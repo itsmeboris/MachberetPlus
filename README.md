@@ -1,6 +1,6 @@
 # Machberet+ Android web pilot
 
-Hebrew worksheet capture, teacher confirmation, accessible student work, voice feedback and account-free parent acknowledgement. React/Vite, Hono/Cloudflare Worker, D1 persistence, browser-local Hebrew OCR.
+Hebrew worksheet capture, teacher confirmation, classroom distribution, accessible student work, voice feedback and account-free parent acknowledgement. React/Vite, Hono/Cloudflare Worker and D1. Printed-page OCR runs locally; handwritten/photo recognition uses Cloudflare Workers AI after explicit confirmation.
 
 ## Local setup
 
@@ -15,9 +15,11 @@ npm run dev:api
 
 Open `http://127.0.0.1:8787`. For frontend development, run `npm run dev` in another terminal and open `http://127.0.0.1:5173`.
 
-Create a teacher account, add a consenting student and open the single-use student link in a separate browser profile. Capture a page or request a parent photo; correct OCR proposals, save, confirm and assign. Complete and submit as the student, review with a voice note, then share the reviewed assignment with the parent.
+Create a teacher account (any email address; password at least twelve characters), create a classroom and paste student names one per line with consent. Copy each student's personal link from the student-management section. Prepare one named assignment, add several exercises without naming each one, choose the classroom and distribute once. Every student receives independent answers and feedback, with progress grouped on the teacher dashboard. Individual assignments are still available.
 
-Parent photo links last one day and only upload to a draft; review links last seven days and expose one reviewed assignment. Both are revocable. Student entry links are single-use and expire after 15 minutes.
+For handwritten pages choose **צילום וכתב יד — זיהוי בענן** and confirm sending the image to Cloudflare. For clear printed pages, local OCR is available without that transfer. Drag the four image corners to the page edges, rotate if needed, then apply. Check all proposed content before assignment; recognition never grades or approves work automatically.
+
+Parent photo links last one day and only upload to a draft; review links last seven days and expose one reviewed assignment. Student entry links are reusable for seven days; renewal invalidates the previous link, and teachers can revoke entry links. Link expiry does not terminate an already authenticated seven-day session. Google/Microsoft login remains a future task; [provider setup is documented](docs/oauth-setup.md).
 
 ## Verification
 
