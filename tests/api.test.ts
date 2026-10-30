@@ -154,7 +154,7 @@ describe("persisted authorized worksheet lifecycle", () => {
       ).status,
     ).toBe(403);
   });
-  it("pairs a protected student session owned by the teacher", async () => {
+  it("pairs a protected student session and reuses an unexpired link", async () => {
     const created = await request("/students", "POST", {
       name: "תלמיד",
       consent: true,
@@ -172,10 +172,64 @@ describe("persisted authorized worksheet lifecycle", () => {
     expect(
       (await request("/auth/student", "POST", { code: created.body.code }, ""))
         .status,
-    ).toBe(401);
+    ).toBe(200);
     expect((await request("/students", "GET", undefined, other)).body).toEqual(
       [],
     );
+  });
+  it("rejects expired, replaced and explicitly revoked links", async () => {
+    const created = await request("/students", "POST", {
+      name: "קישור לבדיקה",
+      consent: true,
+    });
+    await DB.prepare("UPDATE pairing_codes SET expires_at=? WHERE student_id=?")
+      .bind(Date.now() - 1, created.body.id)
+      .run();
+    expect(
+      (await request("/auth/student", "POST", { code: created.body.code }, ""))
+        .status,
+    ).toBe(401);
+    const first = await request(
+      `/students/${created.body.id}/pair`,
+      "POST",
+      {},
+    );
+    const second = await request(
+      `/students/${created.body.id}/pair`,
+      "POST",
+      {},
+    );
+    expect(
+      (await request("/auth/student", "POST", { code: first.body.code }, ""))
+        .status,
+    ).toBe(401);
+    expect(
+      (await request("/auth/student", "POST", { code: second.body.code }, ""))
+        .status,
+    ).toBe(200);
+    expect(
+      (
+        await request(
+          `/students/${created.body.id}/pairing`,
+          "DELETE",
+          {},
+          other,
+        )
+      ).status,
+    ).toBe(404);
+    expect(
+      (await request("/auth/student", "POST", { code: second.body.code }, ""))
+        .status,
+    ).toBe(200);
+    expect(
+      (await request(`/students/${created.body.id}/pairing`, "DELETE", {}))
+        .status,
+    ).toBe(200);
+    expect(
+      (await request("/auth/student", "POST", { code: second.body.code }, ""))
+        .status,
+    ).toBe(401);
+    await request(`/students/${created.body.id}`, "DELETE", {});
   });
   it("requires confirmed exercises before assignment and blocks another teacher", async () => {
     const result = await request("/assignments", "POST", {

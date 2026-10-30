@@ -7,6 +7,7 @@ export function Auth({ onLogin }: { onLogin: (u: User) => void }) {
   const [register, setRegister] = useState(false),
     [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
+    [showPassword, setShowPassword] = useState(false),
     [name, setName] = useState(""),
     [consent, setConsent] = useState(false);
   const { run, busy, error } = useAction();
@@ -81,22 +82,42 @@ export function Auth({ onLogin }: { onLogin: (u: User) => void }) {
                   type="email"
                   dir="ltr"
                   autoComplete="email"
+                  aria-describedby="email-help"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </label>
+              <p id="email-help" className="muted">
+                אפשר להשתמש בכל כתובת דואר אלקטרוני. הסיסמה היא לחשבון במחברת+.
+              </p>
+              {register && (
+                <p id="password-help" className="muted">
+                  בחרו סיסמה באורך 12 תווים לפחות, למשל משפט שקל לזכור.
+                </p>
+              )}
               <label>
                 סיסמה
                 <input
                   required
-                  type="password"
+                  id="auth-password"
+                  type={showPassword ? "text" : "password"}
                   minLength={register ? 12 : 1}
+                  maxLength={128}
+                  aria-describedby={register ? "password-help" : undefined}
                   dir="ltr"
                   autoComplete={register ? "new-password" : "current-password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </label>
+              <button
+                type="button"
+                aria-controls="auth-password"
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "הסתרת סיסמה" : "הצגת סיסמה"}
+              </button>
               {register && (
                 <label className="check">
                   <input

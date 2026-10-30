@@ -131,7 +131,7 @@ auth.post("/student", async (c) => {
   await rateLimit(c, "pairing");
   const data = await input(c, z.object({ code: z.string().min(1).max(128) }));
   const paired = await c.env.DB.prepare(
-    "DELETE FROM pairing_codes WHERE code_hash=? AND expires_at>? RETURNING student_id",
+    "SELECT student_id FROM pairing_codes WHERE code_hash=? AND expires_at>?",
   )
     .bind(await hash(data.code.trim()), Date.now())
     .first<{ student_id: string }>();
