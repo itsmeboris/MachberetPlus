@@ -24,6 +24,22 @@ test("live scanned worksheet, voice feedback, acknowledgement, redeploy persiste
   await page.getByRole("button", { name: "שמירת התלמיד" }).click();
   const pair = await page.getByLabel("קישור כניסה לתלמיד").inputValue();
   await page.getByRole("button", { name: "משימה חדשה" }).click();
+  await page
+    .locator("input[type=file]")
+    .first()
+    .setInputFiles("tests/fixtures/hebrew-worksheet.png");
+  await page.getByRole("button", { name: "זיהוי תרגילים מהדף" }).click();
+  await expect(page.getByRole("status")).toContainText("הזיהוי הושלם", {
+    timeout: 150000,
+  });
+  expect(await page.getByLabel("נוסח השאלה").count()).toBeGreaterThan(1);
+  while ((await page.getByLabel("נוסח השאלה").count()) > 1) {
+    await page
+      .getByRole("button", { name: /הסרת תרגיל/ })
+      .last()
+      .click();
+  }
+  await page.getByLabel("סוג השאלה").selectOption("text");
   await page.getByLabel("שם המשימה").fill("חיבור עד עשרים");
   await page.getByLabel("נוסח השאלה").fill("כמה הם שתים עשרה ועוד שלוש?");
   await page.getByLabel("ביטוי מתמטי").fill("12 + 3");

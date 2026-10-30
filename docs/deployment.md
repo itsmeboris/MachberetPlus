@@ -1,6 +1,6 @@
 # Persistent deployment
 
-The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All five migrations are applied. Initial version: `fadbde9b-53df-4ef1-a58c-b7850e9b9e9f` (2026-10-30). HTTPS activation and live acceptance are being verified; deployment success alone does not prove usability.
+The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All five migrations are applied. Verified version: `a9c53f07-0bf2-4aad-9a5f-b94099be951f` (2026-10-30). HTTPS and the live acceptance suite pass. The initial subdomain TLS provisioning delay resolved without changing application code.
 
 Source repository: https://github.com/itsmeboris/MachberetPlus.
 

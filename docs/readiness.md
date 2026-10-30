@@ -8,6 +8,9 @@
 | `node scripts/smoke-production.mjs` | Built assets served; answer and session survived worker restart; synthetic account cleaned up |
 | `npm audit --omit=dev` | Zero reported vulnerabilities |
 | Visual inspection | Teacher desktop and student mobile screenshots in `artifacts/` inspected |
+| Live HTTPS acceptance | 1 passed in 43.4s against production; actual OCR, saved-answer resume, voice playback, acknowledgement, audio download, redeploy persistence, link/media revocation and account cleanup |
+
+Live URL: https://machberet-pilot.machberet-pilot.workers.dev. Verified worker version: `a9c53f07-0bf2-4aad-9a5f-b94099be951f`. Source: https://github.com/itsmeboris/MachberetPlus, branch `main`. The live check uses synthetic teacher/student/parent sessions and a generated printed worksheet; it does not constitute participant hardware testing. The initial workers.dev TLS provisioning delay resolved, and the production parent mobile screenshot is in `artifacts/live-parent-mobile.png`.
 
 Browser coverage includes registration/consent, pairing, image persistence, actual Hebrew OCR on one printed fixture, parent-photo handoff through assignment, saved-answer resume, recorded feedback playback, parent acknowledgement, audio-embedded HTML download, returned feedback, network retry, persistent conflict resolution, switch entry/deletion, vertical carry cells and dwell pause/resume.
 
@@ -21,7 +24,7 @@ Controls use 64px standard and 88px motor/gaze/switch targets, 20px gaps, primar
 
 ## Outstanding gates
 
-1. **Deployment:** Cloudflare is unauthenticated. Publish persistent HTTPS service and run live acceptance before claiming delivery.
+1. **Deployment gate passed:** Persistent HTTPS hosting and all five production migrations verified. The live workflow and data persistence across redeployment passed; test data was deleted. Re-run live acceptance after material deployment changes.
 2. **Devices:** Test every participant's Android/browser/gaze/physical-switch combination, including duplicate activation, cancel/pause, focus, scrolling, correction and submission. Browser emulation is not hardware certification.
 3. **OCR:** One fixture is not an accuracy benchmark. Evaluate representative printed Hebrew/Nikud, fractions, equations, angled/glare photos, PDF page selection and failure recovery. Measure corrections and retain manual fallback.
 4. **Speech:** Verify actual installed Hebrew voices and mathematical phrasing. Use corrected spoken text or recorded instructions when needed.
