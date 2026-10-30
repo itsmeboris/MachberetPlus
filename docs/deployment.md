@@ -1,6 +1,6 @@
 # Persistent deployment
 
-The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All six migrations are applied. Current version: `db8b2031-3811-4768-9535-a96d64e81d25` (2026-10-31). The mobile keyboard, correction and marking update required no database migration. The initial subdomain TLS provisioning delay resolved without changing application code. Verification details are in readiness.md.
+The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All six migrations are applied. Current version: `1a8c25d8-fd1e-4440-b3eb-f94e84014dd1` (2026-10-31). Free on-device math handwriting recognition is now the default; this update required no database migration. The initial subdomain TLS provisioning delay resolved without changing application code. Verification details are in readiness.md.
 
 Source repository: https://github.com/itsmeboris/MachberetPlus.
 
@@ -41,6 +41,7 @@ On actual Android devices open the HTTPS URL in Chrome and use install/add-to-ho
 - Student/account deletion cascades through associated work, media and access. Downloaded copies and provider backups require separate retention handling.
 - Sessions last seven days. Password reset and managed school identity are not implemented; agree an account-recovery procedure before onboarding.
 - OCR downloads runtime/language data on first use; worksheet recognition itself runs locally. First use needs network access.
-- The above local OCR applies to printed-page mode. Photo/handwriting mode sends the explicitly approved image to the `AI` binding on Cloudflare Workers AI. Provider quotas apply; no provider secret is shipped to the browser. Local development uses the same remote AI service if this option is selected.
+- Printed Hebrew uses local Tesseract; handwritten math uses local Pix2Text-MFR-1.5. Browser model downloads are pinned to a public Hugging Face revision and cached, with a bundled 14.85 MB WASM asset served by Cloudflare static assets. No inference API is used by the default mode. See free-handwriting.md for sizes and limitations.
+- The separately selected cloud mode sends the explicitly approved image to the `AI` binding on Cloudflare Workers AI. Provider quotas apply; no provider secret is shipped to the browser. Local development uses the same remote AI service if this option is selected. Local recognition failure never invokes it automatically.
 - Shell caching is not complete offline account support. An open workbook retains unsent answers locally, with retry and explicit conflict resolution; cold offline reload cannot authenticate.
 - Do not log capability tokens, cookies, worksheet bodies or recordings. Plan storage capacity and retention before expanding beyond the pilot.

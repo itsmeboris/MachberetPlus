@@ -1,6 +1,6 @@
 # Machberet+ Android web pilot
 
-Hebrew worksheet capture, teacher confirmation, classroom distribution, accessible student work, voice feedback and account-free parent acknowledgement. React/Vite, Hono/Cloudflare Worker and D1. Printed-page OCR runs locally; handwritten/photo recognition uses Cloudflare Workers AI after explicit confirmation.
+Hebrew worksheet capture, teacher confirmation, classroom distribution, accessible student work, voice feedback and account-free parent acknowledgement. React/Vite, Hono/Cloudflare Worker and D1. Printed-page OCR and handwritten math recognition run locally; optional cloud recognition requires explicit confirmation.
 
 ## Local setup
 
@@ -17,7 +17,7 @@ Open `http://127.0.0.1:8787`. For frontend development, run `npm run dev` in ano
 
 Create a teacher account (any email address; password at least twelve characters), create a classroom and paste student names one per line with consent. Copy each student's personal link from the student-management section. Prepare one named assignment, add several exercises without naming each one, choose the classroom and distribute once. Every student receives independent answers and feedback, with progress grouped on the teacher dashboard. Individual assignments are still available.
 
-For handwritten pages choose **צילום וכתב יד — זיהוי בענן** and confirm sending the image to Cloudflare. For clear printed pages, local OCR is available without that transfer. Drag the four image corners to the page edges, rotate if needed, then apply. Check all proposed content before assignment; recognition never grades or approves work automatically.
+For handwritten math use the default **חשבון בכתב יד — חינם במכשיר**: Pix2Text runs in the browser, with about 135 MB downloaded on first use and cached when possible. Both supplied photos passed without uploading the image for recognition. This mode does not read handwritten Hebrew instructions. Printed Hebrew uses **דף מודפס — זיהוי במכשיר**. Optional cloud recognition remains separately selected and requires explicit approval. Drag the four image corners to the page edges, rotate if needed, then apply. Check all proposed content before assignment; recognition never grades or approves work automatically. See [model research and limitations](docs/free-handwriting.md).
 
 Parent photo links last one day and only upload to a draft; review links last seven days and expose one reviewed assignment. Student entry links are reusable for seven days; renewal invalidates the previous link, and teachers can revoke entry links. Link expiry does not terminate an already authenticated seven-day session. Google/Microsoft login remains a future task; [provider setup is documented](docs/oauth-setup.md).
 

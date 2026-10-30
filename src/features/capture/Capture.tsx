@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, ApiError, upload } from "../../api";
 import type { Assignment, Exercise } from "../../types";
 import { ErrorMessage, Panel, useAction } from "../../components/Common";
@@ -48,16 +48,18 @@ export function Capture({
     assignment: Assignment;
     classroomId: string;
   } | null>(null);
-  const [recognitionMode, setRecognitionMode] = useState("cloud");
+  const [recognitionMode, setRecognitionMode] = useState("handwriting");
+  const recognitionAbort = useRef<AbortController | null>(null);
+  const [recognizingLocally, setRecognizingLocally] = useState(false);
+  useEffect(() => () => recognitionAbort.current?.abort(), []);
   const [cloudAvailable, setCloudAvailable] = useState(false);
   const [cloudConsent, setCloudConsent] = useState(false);
   useEffect(() => {
     api("/recognition")
       .then((r) => {
         setCloudAvailable(r.cloudAvailable);
-        if (!r.cloudAvailable) setRecognitionMode("local");
       })
-      .catch(() => setRecognitionMode("local"));
+      .catch(() => setCloudAvailable(false));
   }, []);
   function changeSource(blob: Blob) {
     setSource(blob);
@@ -113,12 +115,81 @@ export function Capture({
     setConfirmed(false);
   }
   async function recognize() {
-    let image = source;
-    if (!image && saved?.sourceId) {
-      const response = await fetch(`/api/media/${saved.sourceId}`);
+    async function readSource(signal?: AbortSignal) {
+      if (source) return source;
+      if (!saved?.sourceId) return null;
+      const response = await fetch(`/api/media/${saved.sourceId}`, { signal });
       if (!response.ok) throw new Error("לא ניתן לטעון את דף המקור. נסו שוב.");
-      image = await response.blob();
+      return response.blob();
     }
+    if (recognitionMode === "handwriting") {
+      const controller = new AbortController();
+      recognitionAbort.current = controller;
+      setRecognizingLocally(true);
+      setProgress("מכינים את הדף לזיהוי מקומי…");
+      try {
+        const image = await readSource(controller.signal);
+        controller.signal.throwIfAborted();
+        if (!image) return;
+        const [
+          { prepareFormulaLines },
+          { recognizeFormulaLines },
+          { formulaProposals },
+        ] = await Promise.all([
+          import("./local-formula/preprocess"),
+          import("./local-formula/runtime"),
+          import("./local-formula/result"),
+        ]);
+        const lines = await prepareFormulaLines(image);
+        controller.signal.throwIfAborted();
+        const transcribed = await recognizeFormulaLines(
+          lines,
+          (event) => {
+            if (controller.signal.aborted) return;
+            if (event.phase === "download")
+              setProgress(
+                `מורידים את קובצי הזיהוי למכשיר: ${Math.round(event.loaded / 1e6)} מתוך ${Math.round(event.total / 1e6)} MB. התמונה אינה נשלחת.`,
+              );
+            else if (event.phase === "loading")
+              setProgress("טוענים את הזיהוי במכשיר…");
+            else
+              setProgress(
+                `זיהוי במכשיר: ${event.completed} מתוך ${event.total} תרגילים`,
+              );
+          },
+          controller.signal,
+        );
+        controller.signal.throwIfAborted();
+        const proposed = formulaProposals(transcribed);
+        setExercises(
+          proposed.map((q) => ({
+            ...q,
+            id: crypto.randomUUID(),
+            spokenText: "",
+          })),
+        );
+        setConfirmed(false);
+        setProgress(
+          "הזיהוי הושלם במכשיר. בדקו כל ספרה וסימן מול התמונה לפני שליחה.",
+        );
+      } catch (e) {
+        if (controller.signal.aborted)
+          setProgress("הזיהוי בוטל. התמונה והתרגילים הקיימים נשמרו.");
+        else {
+          setProgress("הזיהוי לא הושלם. התמונה והתרגילים הקיימים נשמרו.");
+          throw e instanceof Error && /[\u05d0-\u05ea]/.test(e.message)
+            ? e
+            : new Error(
+                "לא ניתן להפעיל את הזיהוי במכשיר. בדקו חיבור להורדה הראשונה, נסו שוב או חתכו תרגיל אחד. אפשר להזין תרגילים ידנית; לא הופעל שירות ענן.",
+              );
+        }
+      } finally {
+        recognitionAbort.current = null;
+        setRecognizingLocally(false);
+      }
+      return;
+    }
+    const image = await readSource();
     if (!image) return;
     if (recognitionMode === "cloud") {
       if (!cloudConsent)
@@ -263,7 +334,7 @@ export function Capture({
         <span className="step-label">צילום ← אישור ← שליחה</span>
       </div>
       <fieldset
-        disabled={!!pendingSend}
+        disabled={!!pendingSend || recognizingLocally}
         style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
       >
         <div className="capture-layout">
@@ -326,8 +397,11 @@ export function Capture({
                 value={recognitionMode}
                 onChange={(e) => setRecognitionMode(e.target.value)}
               >
+                <option value="handwriting">חשבון בכתב יד — חינם במכשיר</option>
                 {cloudAvailable && (
-                  <option value="cloud">צילום וכתב יד — זיהוי בענן</option>
+                  <option value="cloud">
+                    צילום וכתב יד — שירות ענן לפי שימוש
+                  </option>
                 )}
                 <option value="local">דף מודפס — זיהוי במכשיר</option>
               </select>
@@ -342,6 +416,15 @@ export function Capture({
                 אני מאשר/ת לשלוח את התמונה לשירות הזיהוי של Cloudflare. התוצאה
                 תוצג לבדיקה שלי לפני שליחה לתלמידים.
               </label>
+            ) : recognitionMode === "handwriting" ? (
+              <p className="muted">
+                זיהוי חינמי של תרגילי חשבון ומשוואות פשוטות. התמונה נשארת במכשיר
+                ולא נשלחת לשירות זיהוי. בשימוש הראשון יורדו כ־135MB של קובצי
+                זיהוי; מומלץ Wi-Fi. הדפדפן שומר אותם לשימוש חוזר כשאפשר. צילום
+                של דף אחד, עם רווח בין התרגילים, נותן תוצאה טובה יותר. אם הזיהוי
+                נכשל, חתכו את הדף או תרגיל אחד. מצב זה אינו קורא הוראות בעברית
+                בכתב יד. הוסיפו אותן ידנית ובדקו תמיד את התוצאה.
+              </p>
             ) : (
               <p className="muted">
                 זיהוי במכשיר מתאים לדפוס ברור, ואינו מיועד לכתב יד.
@@ -554,6 +637,11 @@ export function Capture({
           </Panel>
         </div>
       </fieldset>
+      {recognizingLocally && (
+        <button onClick={() => recognitionAbort.current?.abort()}>
+          ביטול הזיהוי
+        </button>
+      )}
       {pendingSend && (
         <div className="actions">
           <p>

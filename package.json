@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "hono": "^4.13.14",
+    "onnxruntime-web": "1.31.1",
     "pdfjs-dist": "^6.4.299",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

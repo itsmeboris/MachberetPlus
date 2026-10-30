@@ -2,11 +2,13 @@
 
 The original pilot used Tesseract.js for printed Hebrew. It was not suitable for the user's handwritten photographs. A separate math extraction bug also discarded a leading variable (`x + 5 = 12` became `5 = 12`); the parser now preserves it and filters isolated noisy symbols/digits.
 
-Handwriting/photo mode uses Cloudflare Workers AI `@cf/qwen/qwen3.8-27b`. The teacher explicitly confirms transmitting the image; no transmission occurs merely on file selection. The authenticated teacher endpoint accepts only bounded image data, applies rate limiting and validates structured proposals. It cannot solve, grade, approve or distribute work. Printed-page recognition remains available locally.
+Handwritten **math** now defaults to free on-device Pix2Text-MFR-1.5, with automatic page/line preparation, pinned cached model weights and a cancellable browser worker. Both original photographs passed the full local browser pipeline. It does not read handwritten Hebrew prose. See [free model research and benchmark](free-handwriting.md) for limitations, download size, licenses and alternatives.
 
-The browser compresses an image to at most 1600 pixels along its longest edge and a bounded request size. The original source used for the assignment is kept separately. The server does not store the inference request or model response as an extra worksheet record. Provider processing is subject to the provider's data-use terms.
+The separately selected cloud handwriting/photo mode uses Cloudflare Workers AI `@cf/qwen/qwen3.8-27b`. The teacher explicitly confirms transmitting the image; no transmission occurs merely on file selection and local failures never trigger a cloud request. The authenticated teacher endpoint accepts only bounded image data, applies rate limiting and validates structured proposals. It cannot solve, grade, approve or distribute work. Printed-page recognition remains available locally through Tesseract.
 
-## Supplied-photo benchmark
+For cloud recognition, the browser compresses an image to at most 1600 pixels along its longest edge and a bounded request size. The original source used for the assignment is kept separately. The server does not store the inference request or model response as an extra worksheet record. Provider processing is subject to the provider's data-use terms.
+
+## Earlier cloud supplied-photo benchmark
 
 Direct provider checks on 2026-10-30 read both original user photographs (tilted and straight-on) as exactly:
 

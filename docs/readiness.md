@@ -1,10 +1,18 @@
 # Readiness evidence — 2026-10-31
 
-Current deployed version: `db8b2031-3811-4768-9535-a96d64e81d25`. Phone keypad now fits three columns at 320/390px with decimals, labeled extra symbols and preserved 88px accessible targets. Settings explain external eye pointers and dwell, and question focus updates immediately. Students can withdraw an unreviewed submission, correct and resubmit; teachers can mark each exercise and return reviewed work with old parent access revoked.
+## Free local handwriting update
+
+Current deployed version: `1a8c25d8-fd1e-4440-b3eb-f94e84014dd1`. Pix2Text-MFR-1.5 now recognizes handwritten math on-device by default. All 69 unit/API tests and 21 browser tests passed, including both private original photos through the actual WASM model. Build and independent review passed. The live-site test also passed both photos with exact equations, zero upload/POST requests during recognition, and cached second-photo recognition with the model host blocked. Live timings: 19.8s first run, 4.0s cached, on desktop Chromium. The synthetic account was deleted afterward.
+
+Review found saved-source cancellation after navigation and mixed-fraction meaning changes; both were fixed, regression-tested and re-reviewed. No database migration or server inference changes. Private photos/derived crops and downloaded research models remain outside Git. The model handles math, not handwritten Hebrew prose; actual Android speed/memory and broader handwriting accuracy remain unverified. See free-handwriting.md for model comparison, licenses, download size and limits.
+
+## Earlier phone and review update
+
+Previously deployed version: `db8b2031-3811-4768-9535-a96d64e81d25`. Phone keypad now fits three columns at 320/390px with decimals, labeled extra symbols and preserved 88px accessible targets. Settings explain external eye pointers and dwell, and question focus updates immediately. Students can withdraw an unreviewed submission, correct and resubmit; teachers can mark each exercise and return reviewed work with old parent access revoked.
 
 Verification: 39 unit/API tests across 12 files, production build and 18 local browser tests passed. Six live scenarios passed across targeted runs: correction/resubmission, touch with dwell, compact decimal keypad, reactive accessibility modes, teacher marking/parent export/return/revocation, and the existing scanned worksheet-to-parent workflow. Synthetic accounts were cleaned up. Live harness fixes restricted a synthetic client-IP header to localhost and awaited completed review before checking saved marks. The independent review's parent-link issuance/return race was fixed with a guarded insert, tested and re-reviewed. No migration was needed. Visual check: `artifacts/student-mobile-keypad.png`.
 
-Actual participant hardware validation remains outstanding. Recognition was unchanged; the supplied-photo benchmark below remains the evidence for that feature.
+Actual participant hardware validation remains outstanding. Recognition was unchanged in the phone update; the subsequent free recognition update is documented above.
 
 ## Previous release evidence — 2026-10-30
 
