@@ -3,6 +3,7 @@ import { api, ApiError } from "../../api";
 import { type Answer, type Assignment, type User, statuses } from "../../types";
 import { Audio, ErrorMessage, Panel, useAction } from "../../components/Common";
 import { WorkRecord } from "../review/WorkRecord";
+import { decisionLabel } from "../review/decisions";
 import { usePreferences, speakHebrew } from "../../accessibility/Access";
 import { MathAnswer } from "../../components/MathAnswer";
 import { Keyboard } from "../../components/Keyboard";
@@ -22,6 +23,8 @@ export function Student({ user }: { user: User }) {
   if (active)
     return (
       <Workbook
+        key={`${active.id}:${active.contentRevision}:${active.status}`}
+        onReopen={setActive}
         user={user}
         assignment={active}
         onBack={() => {
@@ -128,11 +131,14 @@ function Workbook({
   user,
   assignment: a,
   onBack,
+  onReopen,
 }: {
   user: User;
   assignment: Assignment;
   onBack: () => void;
+  onReopen: (assignment: Assignment) => void;
 }) {
+  const editable = ["assigned", "in_progress", "returned"].includes(a.status);
   const prefs = usePreferences();
   const activeCell = useRef<string | undefined>(undefined);
   const key = `machberet:${user.id}:${a.id}`;
@@ -140,6 +146,7 @@ function Workbook({
     revision: number;
     answers: Record<string, Answer>;
   } | null>(() => {
+    if (!editable) return null;
     try {
       return JSON.parse(localStorage.getItem(key) ?? "null");
     } catch {
@@ -164,14 +171,14 @@ function Workbook({
     [aac, setAac] = useState(false),
     [keyboard, setKeyboard] = useState(prefs.mode === "switch"),
     [focus, setFocus] = useState(prefs.spotlight);
+  useEffect(() => setFocus(prefs.spotlight), [prefs.spotlight]);
   const revision = useRef(recovered?.revision ?? a.revision),
     latest = useRef(answers),
     saving = useRef(false),
-    dirty = useRef(localStorage.getItem(key) !== null),
+    dirty = useRef(editable && localStorage.getItem(key) !== null),
     mounted = useRef(true);
   const { run, error, busy } = useAction();
-  const editable = ["assigned", "in_progress", "returned"].includes(a.status),
-    q = a.exercises[index];
+  const q = a.exercises[index];
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -179,6 +186,7 @@ function Workbook({
     };
   }, []);
   function changeAnswer(answer: Answer) {
+    if (!editable) return;
     const next = { ...latest.current, [q.id]: answer };
     latest.current = next;
     setAnswers(next);
@@ -205,6 +213,7 @@ function Workbook({
     } else changeAnswer({ ...answer, text: value });
   }
   async function persist() {
+    if (!editable) return;
     if (saving.current) throw new Error("השמירה מתבצעת. המתינו רגע ונסו שוב.");
     if (conflictRef.current) throw new Error("יש לבחור איזו גרסה לשמור.");
     if (!dirty.current) return;
@@ -270,6 +279,42 @@ function Workbook({
       <>
         <button onClick={onBack}>→ חזרה למשימות</button>
         <WorkRecord assignment={a} />
+        {a.status === "submitted" && Object.keys(a.feedback).length === 0 ? (
+          <Panel>
+            <p>
+              אפשר לחזור ולתקן כל עוד המורה לא התחיל לבדוק. לאחר התיקון מגישים
+              שוב.
+            </p>
+            <button
+              className="primary"
+              disabled={busy}
+              onClick={() =>
+                run(async () => {
+                  const reopened = await api<Assignment>(
+                    `/assignments/${a.id}/transition`,
+                    "POST",
+                    {
+                      action: "withdraw",
+                      revision: a.revision,
+                      contentRevision: a.contentRevision,
+                    },
+                  );
+                  localStorage.removeItem(key);
+                  onReopen(reopened);
+                })
+              }
+            >
+              חזרה לתיקון התשובות
+            </button>
+          </Panel>
+        ) : (
+          <p>
+            {a.status === "submitted"
+              ? "המורה כבר התחיל לבדוק. כדי לתקן תשובות, בקשו מהמורה להחזיר את העבודה לתיקון."
+              : "בדיקת העבודה הסתיימה. כדי לתקן תשובות, בקשו מהמורה להחזיר את העבודה לתיקון."}
+          </p>
+        )}
+        <ErrorMessage error={error} />
       </>
     );
   return (
@@ -298,7 +343,7 @@ function Workbook({
           <button
             onClick={() => speak(q.spokenText || `${q.prompt} ${q.math}`)}
           >
-            הקראת השאלה ♫
+            הקראת השאלה
           </button>
         </div>
         <h1>{q.prompt}</h1>
@@ -318,6 +363,7 @@ function Workbook({
         {a.feedback[q.id] && (
           <div className="feedback-note">
             <h2>הודעה מהמורה</h2>
+            <p>{decisionLabel(a.feedback[q.id].decision)}</p>
             <p>{a.feedback[q.id].text}</p>
             <Audio id={a.feedback[q.id].audioId} />
           </div>
@@ -407,7 +453,7 @@ function Workbook({
       </Panel>
       <div className="aac">
         <button aria-expanded={aac} onClick={() => setAac(!aac)}>
-          ☏ תקשורת ועזרה
+          תקשורת ועזרה
         </button>
         {aac && (
           <div className="actions">

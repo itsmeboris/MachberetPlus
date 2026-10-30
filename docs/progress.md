@@ -15,3 +15,9 @@ Screenshots: artifacts/teacher-desktop.png and artifacts/student-mobile.png. Aut
 Implemented classrooms/bulk roster/class-wide assignment progress, persistent audience and safe delivery retries, seven-day reusable student links with copy/share/renew/revoke, visible password guidance, interactive crop/rotation, simpler Hebrew feedback controls, optional exercise instructions and cloud handwriting recognition. Both original photos transcribed correctly via direct model benchmark and the deployed browser flow. Google/Microsoft activation deferred by user's explicit reply; provider setup documented for later.
 
 Verified: 35 unit/API tests, 13 local browser tests, production build, independent review and 3 live browser scenarios passed. Additive migration 0006 applied; original two production users retained after synthetic cleanup. Deployed version d54f67bc-72e8-45a8-81bd-35cfda628c49. Private photos remain outside git. Full branch review's two material findings fixed and approved on re-review.
+
+## Phone and review update — 2026-10-31
+
+Implemented compact decimal keypad, labeled optional math symbols, explicit accessibility-mode explanations, reactive spotlight, touch fallback during dwell, student withdrawal/correction/resubmission, per-exercise correct/retry/unmarked decisions and teacher return of reviewed work. Returning work revokes parent links, clears acknowledgement and guards concurrent sharing/acknowledgement. Removed misleading speech/help symbols. Recognition costs documented using current official pricing; local OCR remains available.
+
+Verified 39 unit/API tests, 18 local browser tests, build, independent review and six live scenarios across targeted runs. Deployed version `db8b2031-3811-4768-9535-a96d64e81d25`; no schema change. Live test-harness header and async completion assumptions corrected. Synthetic accounts cleaned up; actual device checks remain a field task.

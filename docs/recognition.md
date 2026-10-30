@@ -21,3 +21,11 @@ Observed direct response times were 4.9 and 6.3 seconds. The live browser test s
 More complex Hebrew handwriting, diagrams, crowded pages and poor lighting need representative evaluation. The teacher must check every result and can edit or enter exercises manually. Recognition failure preserves the selected image and existing exercises.
 
 Provider references: [model and input/output schema](https://developers.cloudflare.com/workers-ai/models/qwen3.8-27b/), [data usage](https://developers.cloudflare.com/workers-ai/platform/data-usage/).
+
+## Recognition costs (checked 2026-10-31)
+
+Local Tesseract recognition runs in the browser and has no cloud inference fee. It is intended for printed pages; the supplied handwritten equations failed with that path.
+
+Cloudflare provides 10,000 Workers AI neurons per day free, shared across account usage. Free-plan requests stop when the allowance is exhausted. Paid-plan usage above it costs $0.011 per 1,000 neurons. The configured model's equivalent token rates are $0.45 per million input tokens and $3.20 per million output tokens. At the observed sample usage (about 2,198 input and 173 output tokens), this is approximately $0.00154 per photo before the free allowance. This is an estimate for those short samples, not a fixed per-photo price or an account billing audit. Hosting/storage charges are separate.
+
+Source: [Cloudflare Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) and the model reference above. Prices and model token usage can change.

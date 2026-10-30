@@ -6,6 +6,7 @@ import { AudioRecorder } from "../../components/AudioRecorder";
 import { WorkRecord } from "./WorkRecord";
 import { AnswerView } from "../../components/AnswerView";
 import { MathText } from "../../components/MathText";
+import { decisionLabels } from "./decisions";
 import "./Review.css";
 export function Review({
   assignment: initial,
@@ -32,6 +33,8 @@ export function Review({
       await api(`/assignments/${a.id}/transition`, "POST", {
         action,
         contentRevision: saved.contentRevision,
+        revision: a.revision,
+        expectedStatus: a.status,
       }),
     );
   }
@@ -52,11 +55,12 @@ export function Review({
       {a.status === "submitted" ? (
         <Panel>
           <p>
-            עברו על התשובות. אפשר להוסיף הערה לכל תרגיל, ואז לסיים את הבדיקה או
-            להחזיר לתלמיד לתיקון.
+            עברו על התשובות וסמנו את תשובת התלמיד בכל תרגיל. אפשר להוסיף הערה,
+            ואז לסיים את הבדיקה או להחזיר לתלמיד לתיקון.
           </p>
           <p className="muted">
-            ההערות נשמרות כשמסיימים את הבדיקה או מחזירים לתיקון.
+            הסימונים וההערות נשמרים כשמסיימים את הבדיקה או מחזירים לתיקון.
+            הסימון נעשה על ידי המורה; אין בדיקה אוטומטית.
           </p>
           {a.exercises.map((q, i) => (
             <article className="record-question" key={q.id}>
@@ -73,6 +77,34 @@ export function Review({
                 <MathText value={q.math} />
               </p>
               <AnswerView question={q} answer={a.answers[q.id]} />
+              <fieldset disabled={busy} className="review-decisions">
+                <legend>סימון התשובה לתרגיל {i + 1}</legend>
+                {(["reviewed", "retry", "unmarked"] as const).map(
+                  (decision) => (
+                    <label key={decision}>
+                      <input
+                        type="radio"
+                        name={`decision-${q.id}`}
+                        value={decision}
+                        checked={
+                          (feedback[q.id]?.decision ?? "unmarked") === decision
+                        }
+                        onChange={() =>
+                          setFeedback((previous) => ({
+                            ...previous,
+                            [q.id]: {
+                              ...previous[q.id],
+                              decision:
+                                decision === "unmarked" ? undefined : decision,
+                            },
+                          }))
+                        }
+                      />
+                      {decisionLabels[decision]}
+                    </label>
+                  ),
+                )}
+              </fieldset>
               <details className="review-feedback">
                 <summary>הוספת הערה לתרגיל {i + 1} (לא חובה)</summary>
                 <fieldset disabled={busy} className="review-feedback-fields">
@@ -145,7 +177,8 @@ export function Review({
           ))}
           <p>
             <strong>סיום הבדיקה:</strong> המשימה תסומן כנבדקה, והתלמיד יוכל
-            לראות את ההערות.
+            לראות את הסימונים וההערות. סיום הבדיקה אינו מסמן אוטומטית תשובות
+            כנכונות.
           </p>
           <p>
             <strong>החזרה לתיקון:</strong> התלמיד יוכל לשנות תשובות ולהגיש שוב.
@@ -175,6 +208,32 @@ export function Review({
       <ErrorMessage error={error} />
       {["reviewed", "parent_acknowledged"].includes(a.status) && (
         <Panel>
+          <h2>תיקון העבודה לאחר הבדיקה</h2>
+          <p>
+            אפשר להחזיר לתלמיד כדי לשנות תשובות ולהגיש שוב. המשוב יישאר לעיון,
+            וקישורי ההורה הקיימים ואישור ההורה יבוטלו עד לבדיקה ולשיתוף מחדש.
+          </p>
+          <button
+            disabled={busy}
+            onClick={() =>
+              run(async () => {
+                const returned = await api<Assignment>(
+                  `/assignments/${a.id}/transition`,
+                  "POST",
+                  {
+                    action: "return",
+                    contentRevision: a.contentRevision,
+                    revision: a.revision,
+                    expectedStatus: a.status,
+                  },
+                );
+                setA(returned);
+                setLink("");
+              })
+            }
+          >
+            החזרה לתיקון
+          </button>
           <h2>שיתוף העבודה עם ההורה</h2>
           <p>
             {a.acknowledgedAt

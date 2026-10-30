@@ -21,6 +21,8 @@ For handwritten pages choose **צילום וכתב יד — זיהוי בענן*
 
 Parent photo links last one day and only upload to a draft; review links last seven days and expose one reviewed assignment. Student entry links are reusable for seven days; renewal invalidates the previous link, and teachers can revoke entry links. Link expiry does not terminate an already authenticated seven-day session. Google/Microsoft login remains a future task; [provider setup is documented](docs/oauth-setup.md).
 
+The phone math keypad includes decimals, with labeled extra symbols behind a toggle. Standard mode uses compact keys; accessible modes retain large targets. Eye-pointer mode supports external pointer hardware, not camera eye tracking; dwell activation is configured separately. Students can reopen a submission before teacher feedback is saved. Teachers mark each answer correct, retry or unmarked, and can return reviewed work for corrections (revoking previous parent links). [Recognition costs and limitations](docs/recognition.md) are documented.
+
 ## Verification
 
 ```powershell

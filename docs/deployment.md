@@ -1,6 +1,6 @@
 # Persistent deployment
 
-The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All six migrations are applied. Verified version: `d54f67bc-72e8-45a8-81bd-35cfda628c49` (2026-10-30). The classroom, handwriting-photo and full worksheet live acceptance tests pass. The initial subdomain TLS provisioning delay resolved without changing application code.
+The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All six migrations are applied. Current version: `db8b2031-3811-4768-9535-a96d64e81d25` (2026-10-31). The mobile keyboard, correction and marking update required no database migration. The initial subdomain TLS provisioning delay resolved without changing application code. Verification details are in readiness.md.
 
 Source repository: https://github.com/itsmeboris/MachberetPlus.
 

@@ -1,4 +1,12 @@
-# Readiness evidence — 2026-10-30
+# Readiness evidence — 2026-10-31
+
+Current deployed version: `db8b2031-3811-4768-9535-a96d64e81d25`. Phone keypad now fits three columns at 320/390px with decimals, labeled extra symbols and preserved 88px accessible targets. Settings explain external eye pointers and dwell, and question focus updates immediately. Students can withdraw an unreviewed submission, correct and resubmit; teachers can mark each exercise and return reviewed work with old parent access revoked.
+
+Verification: 39 unit/API tests across 12 files, production build and 18 local browser tests passed. Six live scenarios passed across targeted runs: correction/resubmission, touch with dwell, compact decimal keypad, reactive accessibility modes, teacher marking/parent export/return/revocation, and the existing scanned worksheet-to-parent workflow. Synthetic accounts were cleaned up. Live harness fixes restricted a synthetic client-IP header to localhost and awaited completed review before checking saved marks. The independent review's parent-link issuance/return race was fixed with a guarded insert, tested and re-reviewed. No migration was needed. Visual check: `artifacts/student-mobile-keypad.png`.
+
+Actual participant hardware validation remains outstanding. Recognition was unchanged; the supplied-photo benchmark below remains the evidence for that feature.
+
+## Previous release evidence — 2026-10-30
 
 | Check | Result |
 |---|---|

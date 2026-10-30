@@ -4,13 +4,17 @@ export async function studentFixture(
   browser: Browser,
   kind = "arithmetic",
 ) {
+  await page.goto("/");
+  const origin = new URL(page.url()).origin;
   // Separate synthetic clients; production rate limiting stays unchanged.
   const testClientIP = `192.0.2.${Math.floor(Math.random() * 250) + 1}`;
   const post = async (path: string, data: unknown) => {
-    const r = await page.request.post(`http://127.0.0.1:5173/api${path}`, {
+    const r = await page.request.post(`${origin}/api${path}`, {
       headers: {
-        Origin: "http://127.0.0.1:5173",
-        "CF-Connecting-IP": testClientIP,
+        Origin: origin,
+        ...(new URL(origin).hostname === "127.0.0.1"
+          ? { "CF-Connecting-IP": testClientIP }
+          : {}),
       },
       data,
     });
@@ -32,9 +36,9 @@ export async function studentFixture(
     ],
   });
   const confirmation = await page.request.patch(
-    `http://127.0.0.1:5173/api/assignments/${assignment.id}`,
+    `${origin}/api/assignments/${assignment.id}`,
     {
-      headers: { Origin: "http://127.0.0.1:5173" },
+      headers: { Origin: origin },
       data: { confirmed: true, contentRevision: 0 },
     },
   );
@@ -50,7 +54,7 @@ export async function studentFixture(
   student.on("pageerror", (error) =>
     console.error("Student page error:", error.message),
   );
-  await student.goto(`http://127.0.0.1:5173/?join=${user.code}`);
+  await student.goto(`${origin}/?join=${user.code}`);
   await student.getByRole("button", { name: "כניסה למשימות שלי" }).click();
   await expect(
     student.getByRole("button", { name: "התחל עבודה" }),

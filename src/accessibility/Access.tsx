@@ -52,7 +52,7 @@ export function Access({
   const { run, error, busy } = useAction();
   useEffect(() => {
     void api<Preferences>("/preferences")
-      .then(setPreferences)
+      .then((saved) => setPreferences({ ...defaults, ...saved }))
       .catch(() => {});
   }, []);
   useEffect(() => {
@@ -70,6 +70,7 @@ export function Access({
       raf = 0,
       sequence = 0;
     let dispatching = false;
+    let lastPointerType = "";
     const clear = () => {
       target?.classList.remove("dwell-target");
       target?.style.removeProperty("--dwell-progress");
@@ -93,7 +94,15 @@ export function Access({
         }
       }
     };
+    const pointerDown = (event: PointerEvent) => {
+      lastPointerType = event.pointerType;
+      if (event.pointerType === "touch") clear();
+    };
     const click = (event: MouseEvent) => {
+      // Touch is direct activation, even when an external pointer uses dwell.
+      const pointerType =
+        (event as PointerEvent).pointerType || lastPointerType;
+      if (pointerType === "touch") return;
       if (!paused && !dispatching && event.isTrusted && event.detail > 0) {
         event.preventDefault();
         event.stopPropagation();
@@ -118,6 +127,7 @@ export function Access({
       raf = requestAnimationFrame(tick);
     };
     region.addEventListener("pointerover", move);
+    region.addEventListener("pointerdown", pointerDown);
     region.addEventListener("pointerleave", clear);
     region.addEventListener("click", click, true);
     raf = requestAnimationFrame(tick);
@@ -125,6 +135,7 @@ export function Access({
       cancelAnimationFrame(raf);
       clear();
       region.removeEventListener("pointerover", move);
+      region.removeEventListener("pointerdown", pointerDown);
       region.removeEventListener("pointerleave", clear);
       region.removeEventListener("click", click, true);
     };
@@ -221,6 +232,7 @@ export function Access({
       <div
         ref={root}
         className="access-root"
+        data-access-mode={preferences.mode}
         style={{ fontSize: `${preferences.fontScale}em` }}
       >
         <div className="access-toolbar">
@@ -250,6 +262,7 @@ export function Access({
             <label>
               דרך ההפעלה
               <select
+                aria-label="דרך ההפעלה"
                 value={preferences.mode}
                 onChange={(e) =>
                   setPreferences((p) => ({
@@ -258,15 +271,26 @@ export function Access({
                   }))
                 }
               >
-                <option value="standard">מגע ועכבר</option>
+                <option value="standard">מגע, עכבר ומקלדת</option>
                 <option value="motor">כפתורים גדולים</option>
-                <option value="gaze">מיקוד מבט</option>
+                <option value="gaze">מצביע עיניים חיצוני</option>
                 <option value="switch">שני מתגים</option>
               </select>
             </label>
+            <p className="muted" aria-live="polite">
+              {preferences.mode === "standard" &&
+                "מקלדת חשבון קומפקטית למגע, לעכבר ולמקלדת רגילה."}
+              {preferences.mode === "motor" &&
+                "כפתורים גדולים בגודל 88 פיקסלים לפחות, לתנועה וללחיצה נוחות יותר."}
+              {preferences.mode === "gaze" &&
+                "כפתורים גדולים לשימוש עם מצביע עיניים חיצוני שמזיז את סמן העכבר. המחברת אינה מפעילה מצלמה ואינה עוקבת אחרי העיניים. בוחרים בנפרד מי מפעיל לחיצה בשהייה."}
+              {preferences.mode === "switch" &&
+                "כפתורים גדולים וסריקה באמצעות שני מתגים: רווח לקידום ו־Enter לבחירה."}
+            </p>
             <label>
               הפעלה בשהייה
               <select
+                aria-label="הפעלה בשהייה"
                 value={preferences.dwellSource}
                 onChange={(e) =>
                   setPreferences((p) => ({
@@ -281,24 +305,28 @@ export function Access({
               </select>
             </label>
             <p className="muted">
-              כשמפעילים שהייה במכשיר, בוחרים כאן ״המכשיר״ כדי למנוע הפעלה כפולה.
+              שהייה פועלת בנפרד מדרך ההפעלה. במצב ״המחברת״, השארת הסמן על כפתור
+              מפעילה אותו ללא לחיצה. כשמפעילים שהייה במכשיר, בוחרים כאן ״המכשיר״
+              כדי למנוע הפעלה כפולה. במצב ״כבויה״ לוחצים כרגיל.
             </p>
-            <label>
-              זמן שהייה: {preferences.dwellMs} מילישניות
-              <input
-                type="range"
-                min="800"
-                max="1500"
-                step="100"
-                value={preferences.dwellMs}
-                onChange={(e) =>
-                  setPreferences((p) => ({
-                    ...p,
-                    dwellMs: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
+            {preferences.dwellSource === "app" && (
+              <label>
+                זמן שהייה: {preferences.dwellMs} מילישניות
+                <input
+                  type="range"
+                  min="800"
+                  max="1500"
+                  step="100"
+                  value={preferences.dwellMs}
+                  onChange={(e) =>
+                    setPreferences((p) => ({
+                      ...p,
+                      dwellMs: Number(e.target.value),
+                    }))
+                  }
+                />
+              </label>
+            )}
             <label className="check">
               <input
                 type="checkbox"
@@ -309,6 +337,10 @@ export function Access({
               />
               מיקוד בשאלה הפעילה
             </label>
+            <p className="muted">
+              מיקוד בשאלה מחשיך את האזור שסביבה כדי לצמצם הסחות דעת. הוא אינו
+              מעקב עיניים ואינו משנה את דרך ההפעלה.
+            </p>
             <label>
               גודל טקסט
               <select
@@ -325,10 +357,12 @@ export function Access({
                 <option value="1.5">גדול מאוד</option>
               </select>
             </label>
-            <p>
-              שני מתגים: רווח לקידום, Enter לבחירה. במקלדת בוחרים קודם שורת
-              מקשים ואז מקש. Escape חוזר לקבוצות.
-            </p>
+            {preferences.mode === "switch" && (
+              <p>
+                שני מתגים: רווח לקידום, Enter לבחירה. במקלדת בוחרים קודם שורת
+                מקשים ואז מקש. Escape חוזר לקבוצות.
+              </p>
+            )}
             <button
               className="primary"
               disabled={busy}

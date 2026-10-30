@@ -163,25 +163,29 @@ assignments.put("/:id/answers", async (c) => {
 });
 assignments.post("/:id/transition", async (c) => {
   const row = await assignment(c, c.req.param("id"));
-  const { action, contentRevision, revision } = await input(
+  const { action, contentRevision, revision, expectedStatus } = await input(
     c,
     z.object({
-      action: z.enum(["assign", "submit", "return", "review"]),
+      action: z.enum(["assign", "submit", "withdraw", "return", "review"]),
+      expectedStatus: z.string().optional(),
       contentRevision: z.number().int().nonnegative().optional(),
       revision: z.number().int().nonnegative().optional(),
     }),
   );
   const actor = c.get("actor");
-  if ((action === "submit") !== (actor.role === "student"))
+  if (["submit", "withdraw"].includes(action) !== (actor.role === "student"))
     fail(403, "אין הרשאה לפעולה");
   const valid: Record<string, string[]> = {
     assign: ["draft"],
     submit: ["assigned", "in_progress", "returned"],
-    return: ["submitted"],
+    withdraw: ["submitted"],
+    return: ["submitted", "reviewed", "parent_acknowledged"],
     review: ["submitted"],
   };
   if (!valid[action].includes(row.status))
     fail(409, "הפעולה אינה זמינה בשלב זה");
+  if (expectedStatus !== undefined && expectedStatus !== row.status)
+    fail(409, "מצב העבודה השתנה. יש לטעון מחדש.");
   if (action === "assign" && !row.confirmed)
     fail(400, "יש לאשר את התרגילים לפני השליחה");
   if (
@@ -189,6 +193,39 @@ assignments.post("/:id/transition", async (c) => {
     (action !== "submit" && contentRevision === undefined)
   )
     fail(400, "נדרשת הגרסה שנבדקה");
+  if (action === "withdraw") {
+    if (revision === undefined) fail(400, "נדרשת הגרסה שנבדקה");
+    if (Object.keys(JSON.parse(row.feedback)).length)
+      fail(409, "המורה כבר התחיל לבדוק. יש לבקש החזרה לתיקון.");
+    const result = await c.env.DB.prepare(
+      "UPDATE assignments SET status='in_progress',content_revision=content_revision+1,updated_at=? WHERE id=? AND status='submitted' AND revision=? AND content_revision=? AND feedback=?",
+    )
+      .bind(Date.now(), row.id, revision, contentRevision, row.feedback)
+      .run();
+    if (!result.meta.changes) fail(409, "המשימה השתנתה. יש לטעון אותה מחדש.");
+    await event(c.env.DB, row.id, "withdrawn").run();
+    return c.json(present(await assignment(c, row.id)));
+  }
+  if (action === "return") {
+    if (
+      row.status !== "submitted" &&
+      (revision === undefined || expectedStatus === undefined)
+    )
+      fail(400, "נדרשת הגרסה שנבדקה");
+    const matchRevision = revision ?? row.revision;
+    const results = await c.env.DB.batch([
+      c.env.DB.prepare(
+        "UPDATE parent_links SET revoked=1 WHERE assignment_id=? AND EXISTS (SELECT 1 FROM assignments WHERE id=? AND status=? AND content_revision=? AND revision=?)",
+      ).bind(row.id, row.id, row.status, contentRevision, matchRevision),
+      c.env.DB.prepare(
+        "UPDATE assignments SET status='returned',acknowledged_at=NULL,content_revision=content_revision+1,updated_at=? WHERE id=? AND status=? AND content_revision=? AND revision=?",
+      ).bind(Date.now(), row.id, row.status, contentRevision, matchRevision),
+    ]);
+    if (!results[1].meta.changes)
+      fail(409, "המשימה השתנתה. יש לטעון אותה מחדש.");
+    await event(c.env.DB, row.id, "returned").run();
+    return c.json(present(await assignment(c, row.id)));
+  }
   const status = {
     assign: "assigned",
     submit: "submitted",
@@ -269,14 +306,22 @@ assignments.post("/:id/parent-links", async (c) => {
     fail(409, "יש להשלים את הבדיקה לפני השיתוף");
   const token = randomToken(),
     expiresAt = Date.now() + 7 * 86400000;
-  await c.env.DB.batch([
-    c.env.DB.prepare("INSERT INTO parent_links VALUES (?,?,?,0)").bind(
+  const results = await c.env.DB.batch([
+    c.env.DB.prepare(
+      "INSERT INTO parent_links SELECT ?,?,?,0 WHERE EXISTS (SELECT 1 FROM assignments WHERE id=? AND status=? AND content_revision=? AND revision=?)",
+    ).bind(
       await hash(token),
       row.id,
       expiresAt,
+      row.id,
+      row.status,
+      row.content_revision,
+      row.revision,
     ),
-    event(c.env.DB, row.id, "shared"),
   ]);
+  if (!results[0].meta.changes)
+    fail(409, "העבודה השתנתה. יש לטעון מחדש לפני השיתוף.");
+  await event(c.env.DB, row.id, "shared").run();
   return c.json({ token, expiresAt }, 201);
 });
 assignments.delete("/:id/parent-links", async (c) => {
@@ -336,11 +381,19 @@ parent.get("/:token", async (c) => {
 });
 parent.post("/:token/acknowledge", async (c) => {
   const row = await parentAssignment(c.env.DB, c.req.param("token"));
-  await c.env.DB.prepare(
-    "UPDATE assignments SET acknowledged_at=COALESCE(acknowledged_at,?),status='parent_acknowledged',updated_at=? WHERE id=?",
+  const result = await c.env.DB.prepare(
+    "UPDATE assignments SET acknowledged_at=COALESCE(acknowledged_at,?),status='parent_acknowledged',updated_at=? WHERE id=? AND status IN ('reviewed','parent_acknowledged') AND EXISTS (SELECT 1 FROM parent_links WHERE assignment_id=? AND token_hash=? AND revoked=0 AND expires_at>?)",
   )
-    .bind(Date.now(), Date.now(), row.id)
+    .bind(
+      Date.now(),
+      Date.now(),
+      row.id,
+      row.id,
+      await hash(c.req.param("token")),
+      Date.now(),
+    )
     .run();
+  if (!result.meta.changes) fail(409, "העבודה השתנתה. הקישור אינו זמין כעת.");
   const saved = await c.env.DB.prepare(
     "SELECT acknowledged_at FROM assignments WHERE id=?",
   )

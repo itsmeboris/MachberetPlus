@@ -725,14 +725,56 @@ small {
   font-size: 24px;
 }
 .keyboard-row {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(var(--key-target), 1fr));
+  gap: 6px;
 }
 .keyboard-groups {
+  --key-target: 88px;
   display: grid;
-  gap: 20px;
-  margin: 24px 0;
+  gap: 6px;
+  margin: 16px auto;
+  max-width: 420px;
+}
+.access-root[data-access-mode="standard"] .keyboard-groups {
+  --key-target: 48px;
+}
+.keyboard-groups button {
+  min-width: var(--key-target);
+  min-height: var(--key-target);
+  padding: 6px;
+  border-radius: 10px;
+  font-size: 1.25em;
+}
+.keyboard-groups .keyboard-symbol-toggle {
+  font-size: 1em;
+}
+.keyboard-symbols:not([hidden]) {
+  display: grid;
+  gap: 6px;
+}
+.keyboard-symbol {
+  flex-direction: column;
+  gap: 2px;
+}
+.keyboard-symbol small {
+  font-size: 0.6em;
+}
+@media (max-width: 600px) {
+  main {
+    padding-inline: 16px;
+  }
+  .question {
+    padding: 12px;
+  }
+}
+@media (max-width: 360px) {
+  main {
+    padding-inline: 12px;
+  }
+  .question {
+    padding: 8px;
+  }
 }
 .math-expression {
   unicode-bidi: isolate;

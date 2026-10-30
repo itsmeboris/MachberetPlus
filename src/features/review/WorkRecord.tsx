@@ -4,6 +4,7 @@ import { Audio, Panel, ErrorMessage, useAction } from "../../components/Common";
 import { downloadRecord } from "./export";
 import { MathText } from "../../components/MathText";
 import { AnswerView } from "../../components/AnswerView";
+import { decisionLabel } from "./decisions";
 export function WorkRecord({
   assignment: a,
   parentToken,
@@ -28,6 +29,10 @@ export function WorkRecord({
             </p>
           )}
           <AnswerView question={q} answer={a.answers[q.id]} />
+          <p className="teacher-decision">
+            סימון המורה:{" "}
+            <strong>{decisionLabel(a.feedback[q.id]?.decision)}</strong>
+          </p>
           {a.feedback[q.id] && (
             <div className="feedback-note">
               {a.feedback[q.id].sticker && (
