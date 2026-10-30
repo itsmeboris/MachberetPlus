@@ -1,19 +1,11 @@
-# Execution ledger — plan: docs/superpowers/plans/2026-10-30-machberet-pilot.md
+﻿# Execution ledger
 
-## Decisions
-- User approved an Android-friendly web pilot and waived further design questions.
-- New workspace had no git repository; initialized `pilot-web` in place, preserving all supplied references.
-- Inline execution; database/API tests precede implementation.
-- Miniflare 5 has a changed constructor; use its supported `convertV4MiniflareOptions` adapter. Version 4 pulled vulnerable development dependencies, so use the version already required by Wrangler, with a clean audit.
+Plan: docs/superpowers/plans/2026-10-30-machberet-pilot.md. Scope: docs/pilot-brief.txt.
 
-## Progress
-- Task 1 in progress: schema, authorization, student pairing, assignment transitions, revisioned answers, parent links/acknowledgement, preferences and cascading deletion implemented.
-- Initial 10 integration tests failed on absent routes, then all passed against real D1 (10/10). Typecheck passed before test harness version update.
-- Remaining Task 1 checks: independent isolation/concurrency/rate limiting/logout tests, production-runtime smoke, account deletion, consent withdrawal, final verification and commit.
-- Tasks 2–5 not implemented yet. No deployed service or UI yet. No actual pilot devices connected.
+User chose the Android web pilot and waived further design questions. Fresh repository initialized on pilot-web; supplied PRD and Stitch references preserved. Implementation ran inline, followed by an independent review whose five material findings were addressed.
 
-## Interface checks
-- Task 2 produces confirmed exercise IDs consumed by Task 3 answers and Task 4 feedback; API rejects unknown IDs.
-- Task 3 revision is an answer revision, separate from metadata; atomic compare-and-update rejects stale writes.
-- Task 4 parent access is independently authorized by token and restricted to reviewed work; no teacher/student session required.
-- Task 5 observes assignment lifecycle events and explicit observations; no camera/microphone/gaze telemetry.
+Tasks 1–4 implemented locally: persistent authorized API, teacher/parent capture and correction, accessible student workbook with recovery, review and parent acknowledgement. Task 5 observation/report/export and field protocol implemented. Verification: 22 unit/API tests, 10 browser tests, production build and worker-restart persistence smoke passed.
+
+Remaining gates: hosting authentication/deployment and live verification; representative OCR evaluation; actual participant Android/gaze/switch testing and field trial. Cloudflare whoami remains unauthenticated. No public URL or participant outcomes are claimed. See readiness.md, deployment.md and pilot-protocol.md.
+
+Screenshots: artifacts/teacher-desktop.png and artifacts/student-mobile.png. Automated tests use synthetic data and separate local databases. Production smoke cleans up its account. Original references remain untouched.

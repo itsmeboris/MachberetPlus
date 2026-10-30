@@ -1,17 +1,159 @@
-import { Hono } from 'hono';
-import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
-import { z } from 'zod';
-import { type Actor,type Env,type Ctx,fail,input } from './database';
-const encoder=new TextEncoder();
-export function randomToken(){return Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');}
-export async function hash(value:string){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',encoder.encode(value))),x=>x.toString(16).padStart(2,'0')).join('');}
-async function passwordHash(password:string,salt:string){const key=await crypto.subtle.importKey('raw',encoder.encode(password),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:encoder.encode(salt),iterations:100000},key,256);return Array.from(new Uint8Array(bits),x=>x.toString(16).padStart(2,'0')).join('');}
-async function session(c:Ctx,id:string){const token=randomToken();await c.env.DB.prepare('INSERT INTO sessions VALUES (?,?,?)').bind(await hash(token),id,Date.now()+7*86400000).run();setCookie(c,'session',token,{httpOnly:true,secure:new URL(c.req.url).protocol==='https:',sameSite:'Lax',path:'/',maxAge:7*86400});}
-export async function loadActor(c:Ctx){const token=getCookie(c,'session');if(!token)fail(401,'יש להתחבר');const user=await c.env.DB.prepare('SELECT u.* FROM users u JOIN sessions s ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?').bind(await hash(token),Date.now()).first<Actor>();if(!user)fail(401,'יש להתחבר מחדש');c.set('actor',user);return user;}
-export async function rateLimit(c:Ctx,scope:string,limit=20){const key=await hash(`${scope}:${c.req.header('CF-Connecting-IP')??'local'}`);const now=Date.now();await c.env.DB.prepare('INSERT INTO rate_limits VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET count=CASE WHEN reset_at<? THEN 1 ELSE count+1 END, reset_at=CASE WHEN reset_at<? THEN excluded.reset_at ELSE reset_at END').bind(key,now+900000,now,now).run();const row=await c.env.DB.prepare('SELECT count FROM rate_limits WHERE key=?').bind(key).first<{count:number}>();if(row!.count>limit)fail(429,'יותר מדי ניסיונות. נסו שוב בעוד רבע שעה.');}
-export const auth=new Hono<Env>();
-auth.post('/register',async c=>{await rateLimit(c,'register',10);const data=await input(c,z.object({email:z.email().max(254).transform(s=>s.toLowerCase()),password:z.string().min(12).max(128),name:z.string().trim().min(1).max(80),consent:z.literal(true)}));const id=crypto.randomUUID(),salt=randomToken();const password=`${salt}:${await passwordHash(data.password,salt)}`;const result=await c.env.DB.prepare('INSERT OR IGNORE INTO users (id,role,email,password,name,consent_at) VALUES (?, ?, ?, ?, ?, ?)').bind(id,'teacher',data.email,password,data.name,Date.now()).run();if(!result.meta.changes)fail(409,'הכתובת כבר רשומה');await session(c,id);return c.json({id,role:'teacher',name:data.name},201);});
-auth.post('/login',async c=>{await rateLimit(c,'login');const data=await input(c,z.object({email:z.email().transform(s=>s.toLowerCase()),password:z.string().max(128)}));const user=await c.env.DB.prepare('SELECT * FROM users WHERE email=? AND role=?').bind(data.email,'teacher').first<Actor&{password:string}>();const [salt,expected]=(user?.password??'dummy:dummy').split(':');const actual=await passwordHash(data.password,salt);if(!user||actual!==expected)fail(401,'פרטי ההתחברות אינם נכונים');await session(c,user.id);return c.json({id:user.id,role:user.role,name:user.name});});
-auth.post('/student',async c=>{await rateLimit(c,'pairing');const data=await input(c,z.object({code:z.string().min(1).max(128)}));const paired=await c.env.DB.prepare('DELETE FROM pairing_codes WHERE code_hash=? AND expires_at>? RETURNING student_id').bind(await hash(data.code.trim()),Date.now()).first<{student_id:string}>();if(!paired)fail(401,'הקישור אינו תקף. בקשו קישור חדש מהמורה.');await session(c,paired.student_id);return c.json({id:paired.student_id,role:'student'});});
-auth.get('/me',async c=>{const a=await loadActor(c);return c.json({id:a.id,role:a.role,name:a.name,preferences:JSON.parse(a.preferences)});});
-auth.post('/logout',async c=>{const token=getCookie(c,'session');if(token)await c.env.DB.prepare('DELETE FROM sessions WHERE token_hash=?').bind(await hash(token)).run();deleteCookie(c,'session',{path:'/'});return c.json({ok:true});});
+import { Hono } from "hono";
+import { getCookie, setCookie, deleteCookie } from "hono/cookie";
+import { z } from "zod";
+import { type Actor, type Env, type Ctx, fail, input } from "./database";
+const encoder = new TextEncoder();
+export function randomToken() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(32)), (x) =>
+    x.toString(16).padStart(2, "0"),
+  ).join("");
+}
+export async function hash(value: string) {
+  return Array.from(
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", encoder.encode(value)),
+    ),
+    (x) => x.toString(16).padStart(2, "0"),
+  ).join("");
+}
+async function passwordHash(password: string, salt: string) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      hash: "SHA-256",
+      salt: encoder.encode(salt),
+      iterations: 100000,
+    },
+    key,
+    256,
+  );
+  return Array.from(new Uint8Array(bits), (x) =>
+    x.toString(16).padStart(2, "0"),
+  ).join("");
+}
+async function session(c: Ctx, id: string) {
+  const token = randomToken();
+  await c.env.DB.prepare("INSERT INTO sessions VALUES (?,?,?)")
+    .bind(await hash(token), id, Date.now() + 7 * 86400000)
+    .run();
+  setCookie(c, "session", token, {
+    httpOnly: true,
+    secure: new URL(c.req.url).protocol === "https:",
+    sameSite: "Lax",
+    path: "/",
+    maxAge: 7 * 86400,
+  });
+}
+export async function loadActor(c: Ctx) {
+  const token = getCookie(c, "session");
+  if (!token) fail(401, "יש להתחבר");
+  const user = await c.env.DB.prepare(
+    "SELECT u.* FROM users u JOIN sessions s ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?",
+  )
+    .bind(await hash(token), Date.now())
+    .first<Actor>();
+  if (!user) fail(401, "יש להתחבר מחדש");
+  c.set("actor", user);
+  return user;
+}
+export async function rateLimit(c: Ctx, scope: string, limit = 20) {
+  const key = await hash(
+    `${scope}:${c.req.header("CF-Connecting-IP") ?? "local"}`,
+  );
+  const now = Date.now();
+  await c.env.DB.prepare(
+    "INSERT INTO rate_limits VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET count=CASE WHEN reset_at<? THEN 1 ELSE count+1 END, reset_at=CASE WHEN reset_at<? THEN excluded.reset_at ELSE reset_at END",
+  )
+    .bind(key, now + 900000, now, now)
+    .run();
+  const row = await c.env.DB.prepare(
+    "SELECT count FROM rate_limits WHERE key=?",
+  )
+    .bind(key)
+    .first<{ count: number }>();
+  if (row!.count > limit) fail(429, "יותר מדי ניסיונות. נסו שוב בעוד רבע שעה.");
+}
+export const auth = new Hono<Env>();
+auth.post("/register", async (c) => {
+  await rateLimit(c, "register", 10);
+  const data = await input(
+    c,
+    z.object({
+      email: z
+        .email()
+        .max(254)
+        .transform((s) => s.toLowerCase()),
+      password: z.string().min(12).max(128),
+      name: z.string().trim().min(1).max(80),
+      consent: z.literal(true),
+    }),
+  );
+  const id = crypto.randomUUID(),
+    salt = randomToken();
+  const password = `${salt}:${await passwordHash(data.password, salt)}`;
+  const result = await c.env.DB.prepare(
+    "INSERT OR IGNORE INTO users (id,role,email,password,name,consent_at) VALUES (?, ?, ?, ?, ?, ?)",
+  )
+    .bind(id, "teacher", data.email, password, data.name, Date.now())
+    .run();
+  if (!result.meta.changes) fail(409, "הכתובת כבר רשומה");
+  await session(c, id);
+  return c.json({ id, role: "teacher", name: data.name }, 201);
+});
+auth.post("/login", async (c) => {
+  await rateLimit(c, "login");
+  const data = await input(
+    c,
+    z.object({
+      email: z.email().transform((s) => s.toLowerCase()),
+      password: z.string().max(128),
+    }),
+  );
+  const user = await c.env.DB.prepare(
+    "SELECT * FROM users WHERE email=? AND role=?",
+  )
+    .bind(data.email, "teacher")
+    .first<Actor & { password: string }>();
+  const [salt, expected] = (user?.password ?? "dummy:dummy").split(":");
+  const actual = await passwordHash(data.password, salt);
+  if (!user || actual !== expected) fail(401, "פרטי ההתחברות אינם נכונים");
+  await session(c, user.id);
+  return c.json({ id: user.id, role: user.role, name: user.name });
+});
+auth.post("/student", async (c) => {
+  await rateLimit(c, "pairing");
+  const data = await input(c, z.object({ code: z.string().min(1).max(128) }));
+  const paired = await c.env.DB.prepare(
+    "DELETE FROM pairing_codes WHERE code_hash=? AND expires_at>? RETURNING student_id",
+  )
+    .bind(await hash(data.code.trim()), Date.now())
+    .first<{ student_id: string }>();
+  if (!paired) fail(401, "הקישור אינו תקף. בקשו קישור חדש מהמורה.");
+  await session(c, paired.student_id);
+  return c.json({ id: paired.student_id, role: "student" });
+});
+auth.get("/me", async (c) => {
+  const a = await loadActor(c);
+  return c.json({
+    id: a.id,
+    role: a.role,
+    name: a.name,
+    preferences: JSON.parse(a.preferences),
+  });
+});
+auth.post("/logout", async (c) => {
+  const token = getCookie(c, "session");
+  if (token)
+    await c.env.DB.prepare("DELETE FROM sessions WHERE token_hash=?")
+      .bind(await hash(token))
+      .run();
+  deleteCookie(c, "session", { path: "/" });
+  return c.json({ ok: true });
+});
