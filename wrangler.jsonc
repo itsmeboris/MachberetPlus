@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "machberet-pilot",
-      "database_id": "local-development",
+      "database_id": "c91e9d2b-2687-4a3e-985e-def29d37600b",
       "migrations_dir": "migrations",
     },
   ],

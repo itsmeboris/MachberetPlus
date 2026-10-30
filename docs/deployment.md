@@ -1,16 +1,17 @@
 # Persistent deployment
 
-`npx wrangler whoami` reports unauthenticated. No public URL or production database exists. `wrangler.jsonc` deliberately contains the placeholder `local-development`. Temporary hosting is not a persistent pilot deployment.
+The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All five migrations are applied. Initial version: `fadbde9b-53df-4ef1-a58c-b7850e9b9e9f` (2026-10-30). HTTPS activation and live acceptance are being verified; deployment success alone does not prove usability.
 
-## Publish
+Source repository: https://github.com/itsmeboris/MachberetPlus.
+
+## Publish from another machine
 
 ```powershell
 npx wrangler login
 npx wrangler whoami
-npx wrangler d1 create machberet-pilot
 ```
 
-Copy the returned database ID into the existing `DB` binding in `wrangler.jsonc`. If the database already exists, use its verified ID instead. Preserve the binding and migrations directory.
+Use the existing database binding in `wrangler.jsonc`; do not recreate the production database.
 
 ```powershell
 npx wrangler d1 migrations apply machberet-pilot --remote
@@ -20,6 +21,14 @@ npm run deploy
 Record the HTTPS URL and worker version. Browser and API use the same origin. Source pages and audio live in private bounded D1 chunks; no public bucket or OCR service credentials are needed.
 
 ## Live acceptance
+
+The opt-in browser suite creates and deletes only its own synthetic account. It exercises a scanned worksheet through voice feedback, download, acknowledgement and revocation. Set the redeploy flag only when intentionally verifying data persistence across a deployment:
+
+```powershell
+$env:PILOT_LIVE_URL='https://machberet-pilot.machberet-pilot.workers.dev'
+$env:PILOT_VERIFY_REDEPLOY='1'
+npm run test:live
+```
 
 Use synthetic data and separate teacher/student/parent sessions. Capture, correct, confirm, assign, answer, reload, submit, record feedback, share, listen and acknowledge. Verify teacher acknowledgement, download audio-embedded HTML, revoke the link and check that both data and audio become inaccessible. Redeploy without replacing the database and verify saved work survives. Delete the synthetic account and verify student/parent access is invalidated. Record evidence in readiness.md.
 
