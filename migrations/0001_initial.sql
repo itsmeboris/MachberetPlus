@@ -1,0 +1,12 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE users (id TEXT PRIMARY KEY, role TEXT NOT NULL CHECK(role IN ('teacher','student')), email TEXT UNIQUE, password TEXT, name TEXT NOT NULL, teacher_id TEXT REFERENCES users(id) ON DELETE CASCADE, consent_at INTEGER NOT NULL, preferences TEXT NOT NULL DEFAULT '{}');
+CREATE TABLE sessions (token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL);
+CREATE TABLE pairing_codes (code_hash TEXT PRIMARY KEY, student_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL);
+CREATE TABLE assignments (id TEXT PRIMARY KEY, teacher_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, student_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'draft', exercises TEXT NOT NULL, confirmed INTEGER NOT NULL DEFAULT 0, answers TEXT NOT NULL DEFAULT '{}', revision INTEGER NOT NULL DEFAULT 0, feedback TEXT NOT NULL DEFAULT '{}', source_id TEXT, instructions_id TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, acknowledged_at INTEGER);
+CREATE INDEX assignments_student ON assignments(student_id,status);
+CREATE INDEX assignments_teacher ON assignments(teacher_id,updated_at);
+CREATE TABLE parent_links (token_hash TEXT PRIMARY KEY, assignment_id TEXT NOT NULL REFERENCES assignments(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL, revoked INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE events (id TEXT PRIMARY KEY, assignment_id TEXT NOT NULL REFERENCES assignments(id) ON DELETE CASCADE, kind TEXT NOT NULL, at INTEGER NOT NULL, data TEXT NOT NULL DEFAULT '{}');
+CREATE TABLE rate_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, reset_at INTEGER NOT NULL);
+CREATE TABLE media (id TEXT PRIMARY KEY, assignment_id TEXT NOT NULL REFERENCES assignments(id) ON DELETE CASCADE, kind TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, duration REAL, question_id TEXT, complete INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE media_chunks (media_id TEXT NOT NULL REFERENCES media(id) ON DELETE CASCADE, part INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY(media_id,part));

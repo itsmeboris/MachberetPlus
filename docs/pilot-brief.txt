@@ -1,0 +1,84 @@
+Build and deploy a working Hebrew-first platform that lets a student complete a real worksheet—from a photographed page to teacher feedback and parent acknowledgement—within one accessible learning workflow.
+The pilot will test whether Machberet+ reduces app switching and adult assistance while making worksheet preparation and review practical for teachers.
+
+The complete workflow
+
+Capture → Confirm exercises → Assign → Solve → Review → Share → Acknowledge
+
+A teacher or parent photographs or uploads a worksheet. Machberet+ extracts candidate exercises, an adult checks them, and the teacher assigns the approved tasks. The student completes one exercise at a time using their accessibility settings. The teacher reviews the answers and attaches voice feedback. The parent opens a secure link shared through WhatsApp and confirms that they reviewed the work together.
+
+Five connected screens
+
+| Screen | Required pilot functionality |
+|---|---|
+| 1. Smart Camera Scan & Auto-OCR Tasks | Capture a photo or upload an image/PDF page; crop, rotate, and correct perspective; recognize Hebrew text and supported math; preview detected exercises alongside the source; edit, select, and confirm exercises before assignment. Include manual exercise creation when recognition fails. |
+| 2. Student Daily Homework Tray | Display one mission card at a time, with teacher audio instructions, a prominent start/resume action, and simple navigation. Separate completed work from pending work. |
+| 3. Student Active Workbook | Present one active question with its answer area directly underneath. Support Hebrew text, isolated LTR math, vertical arithmetic with carry/borrow cells, simple fractions, and basic equations. Include read-aloud, spotlight focus, autosave, submission, and a collapsible AAC dock. |
+| 4. Teacher Feedback & Talking Stickers | Show submitted answers beside their questions; mark reviewed work or request another attempt; attach a sticker with up to 15 seconds of recorded feedback; return work to the student or share the reviewed assignment with a parent. |
+| 5. Parent Mobile Review | Open an assignment-specific link without creating an account; view the completed work, listen to feedback, and tap “Reviewed Together / עברנו יחד על הדף.” Save the acknowledgement for the teacher to see. |
+
+Accessibility requirements
+
+The pilot will include:
+
+- Native Hebrew RTL layout with isolated LTR mathematical expressions.
+- A calm palette, one visually dominant primary action per view, and an 85% spotlight mask around inactive worksheet content.
+- Standard tablet targets of at least 64 × 64 CSS pixels, and gaze/motor-mode targets of at least 88 × 88, with 20px gaps and 48px edge clearance for primary controls.
+- Configurable 800–1500ms dwell activation, visible progress, cancellation, and a pause function. App dwell and device-provided dwell must not cause duplicate activation.
+- Keyboard navigation and two-switch scanning, including answer entry and correction.
+- Hebrew read-aloud that preserves Nikud and speaks supported mathematical expressions meaningfully. Teachers can correct the spoken text or provide recorded instructions.
+- Persistent student accessibility preferences and AAC messages such as help, clarification, break, and finished.
+
+The student interface will limit competing actions through progressive disclosure. Keyboards and scanning groups need explicit treatment rather than an impractical blanket limit of seven keys.
+
+Eye-gaze and switch support must be tested on the actual devices used by pilot participants; visual mockups alone do not establish compatibility.
+
+Supporting components
+
+This must be a working service with:
+
+- Teacher accounts, protected student sessions, and teacher–student assignment permissions.
+- Persistent storage for source pages, corrected exercises, answers, accessibility settings, audio feedback, and acknowledgements.
+- A clear assignment lifecycle: draft → assigned → in progress → submitted → reviewed or returned → parent acknowledged.
+- Recoverable saving, visible upload/recognition failures, and retry paths that preserve existing work.
+- Expiring, revocable parent links restricted to one reviewed assignment.
+- Teacher-initiated WhatsApp sharing through a share action or copied link.
+- A downloadable, printable record of completed answers and feedback.
+- Consent, deletion controls, and minimal measurement data for the pilot. No background camera, microphone, or gaze recording.
+
+Initial content boundary
+
+Start with clear printed Hebrew worksheets containing short instructions, short written answers, whole-number arithmetic, simple fractions, and basic one-variable equations. Process one worksheet page at a time.
+
+OCR proposes content; an adult confirms its accuracy. Teacher review remains the authority for correctness.
+
+Proposed field pilot
+
+Run four weeks of classroom/home use after the working build passes readiness checks, with:
+
+- 10–15 students, selected for varied access needs.
+- 3–5 teachers or therapists and participating parents.
+- At least three short assignments per student per week.
+- A baseline observation using each student’s existing tools, followed by comparable Machberet+ assignments.
+
+Measure interface assistance separately from teaching assistance. Compare each student with their own baseline and report results by input mode.
+
+Proposed success criteria
+
+| Outcome | Target |
+|---|---|
+| Complete workflow | At least 80% of assigned pilot worksheets reach teacher review without a technical blocker. |
+| Student independence | At least 30% reduction in median adult interventions needed to operate the interface, compared with baseline. |
+| Reduced fragmentation | At least 90% of student sessions require no additional worksheet/editor app; established assistive input tools remain available. |
+| Scan preparation | Median capture-to-approved-assignment time of no more than three minutes for supported pages, including OCR corrections. |
+| Teacher review | Median marking interaction of no more than ten seconds per short exercise, measured separately from reading and recording feedback. |
+| Parent participation | At least 70% of shared assignments receive acknowledgement within 48 hours. |
+| Reliability and access | No unresolved loss of acknowledged saved work, cross-student access defects, or blocking navigation failures in the tested configurations. |
+
+Deferred beyond this pilot
+
+Full Word/Google Docs import and export, editable Word OMML equations, formally validated accessible PDF export, handwriting recognition, advanced geometry, animated math, automatic grading, adaptive typing training, exam-accommodation workflows, distraction detection, automated WhatsApp messaging, and broad hardware certification.
+
+These remain part of the product vision. The pilot first establishes whether the core worksheet workflow is useful, reliable, and accessible.
+
+Definition of done: A participating student can receive a real scanned assignment, complete it using their configured access method, resume saved work, receive teacher voice feedback, and have a parent acknowledge it—with the entire sequence persisted and measurable.

@@ -1,0 +1,10 @@
+import { Hono } from 'hono';
+import { z } from 'zod';
+import { type Env,teacher,fail,input } from './database';
+import { hash,randomToken } from './auth';
+export const students=new Hono<Env>();
+students.get('/',async c=>{const a=teacher(c);return c.json((await c.env.DB.prepare('SELECT id,name FROM users WHERE teacher_id=? ORDER BY name').bind(a.id).all()).results);});
+students.post('/',async c=>{const a=teacher(c),data=await input(c,z.object({name:z.string().trim().min(1).max(80),consent:z.literal(true)}));const id=crypto.randomUUID(),code=randomToken();await c.env.DB.batch([c.env.DB.prepare('INSERT INTO users (id,role,name,teacher_id,consent_at) VALUES (?,?,?,?,?)').bind(id,'student',data.name,a.id,Date.now()),c.env.DB.prepare('INSERT INTO pairing_codes VALUES (?,?,?)').bind(await hash(code),id,Date.now()+900000)]);return c.json({id,name:data.name,code},201);});
+students.post('/:id/pair',async c=>{const a=teacher(c);const id=c.req.param('id');if(!await c.env.DB.prepare('SELECT id FROM users WHERE id=? AND teacher_id=?').bind(id,a.id).first())fail(404,'התלמיד לא נמצא');const code=randomToken();await c.env.DB.batch([c.env.DB.prepare('DELETE FROM pairing_codes WHERE student_id=?').bind(id),c.env.DB.prepare('INSERT INTO pairing_codes VALUES (?,?,?)').bind(await hash(code),id,Date.now()+900000)]);return c.json({code});});
+students.delete('/:id',async c=>{const a=teacher(c);const result=await c.env.DB.prepare('DELETE FROM users WHERE id=? AND teacher_id=?').bind(c.req.param('id'),a.id).run();if(!result.meta.changes)fail(404,'התלמיד לא נמצא');return c.json({ok:true});});
+export const preferences=z.object({mode:z.enum(['standard','motor','gaze','switch']).default('standard'),dwellMs:z.number().int().min(800).max(1500).default(1000),dwellSource:z.enum(['app','device','off']).default('off'),spotlight:z.boolean().default(true),fontScale:z.number().min(1).max(2).default(1),switchNext:z.enum(['Space','ArrowRight','F1']).default('Space'),switchSelect:z.enum(['Enter','F2']).default('Enter')});
