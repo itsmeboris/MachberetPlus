@@ -576,6 +576,36 @@ describe("persisted authorized worksheet lifecycle", () => {
   });
   it("persists accessibility settings and bounds dwell timing", async () => {
     expect(
+      (await request("/preferences", "GET", undefined, student)).body.theme,
+    ).toBe("cream");
+    const themed = await request(
+      "/preferences",
+      "PUT",
+      { theme: "slate", fontScale: 1.25 },
+      student,
+    );
+    expect(themed.body.theme).toBe("slate");
+    expect(
+      (await request("/preferences", "PATCH", { theme: "blue" }, student))
+        .status,
+    ).toBe(200);
+    const changed = (await request("/preferences", "GET", undefined, student))
+      .body;
+    expect(changed.theme).toBe("blue");
+    expect(changed.fontScale).toBe(1.25);
+    expect(
+      (await request("/preferences", "PATCH", { theme: "neon" }, student))
+        .status,
+    ).toBe(400);
+    await request("/preferences", "PATCH", { theme: "slate" }, student);
+    expect(
+      (await request("/preferences", "GET", undefined, student)).body.theme,
+    ).toBe("slate");
+    expect((await request("/preferences", "GET")).body.theme).toBe("cream");
+    expect(
+      (await request("/preferences", "PUT", { theme: "neon" }, student)).status,
+    ).toBe(400);
+    expect(
       (
         await request(
           "/preferences",

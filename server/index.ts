@@ -58,6 +58,18 @@ app.put("/api/preferences", async (c) => {
     .run();
   return c.json(p);
 });
+app.patch("/api/preferences", async (c) => {
+  const { theme } = await input(
+    c,
+    preferences.pick({ theme: true }).required().strict(),
+  );
+  await c.env.DB.prepare(
+    "UPDATE users SET preferences=json_set(preferences, '$.theme', ?) WHERE id=?",
+  )
+    .bind(theme, c.get("actor").id)
+    .run();
+  return c.json({ theme });
+});
 app.onError((error, c) => {
   if (error instanceof HTTPException)
     return c.json({ error: error.message }, error.status);

@@ -15,10 +15,10 @@
   height: 48px;
   min-height: 48px;
   padding: 0;
-  border: 3px solid white;
+  border: 3px solid var(--accent-ink);
   border-radius: 50%;
   background: var(--accent);
-  color: white;
+  color: var(--accent-ink);
   box-shadow: 0 0 0 2px var(--accent);
   touch-action: none;
   cursor: grab;

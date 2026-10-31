@@ -32,6 +32,7 @@ export type Assignment = {
   acknowledgedAt: number | null;
 };
 export type Preferences = {
+  theme: "cream" | "blue" | "slate";
   mode: "standard" | "motor" | "gaze" | "switch";
   dwellMs: number;
   dwellSource: "app" | "device" | "off";

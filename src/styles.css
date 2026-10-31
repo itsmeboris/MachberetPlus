@@ -5,21 +5,73 @@
   line-height: 1.6;
   font-synthesis: none;
   color-scheme: light;
-  --ink: #172b3a;
-  --muted: #42566a;
-  --page: #f1f5f8;
-  --surface: #fff;
-  --subtle: #eaf1f7;
-  --line: #687b8c;
-  --divider: #b5c2ce;
-  --accent: #164f86;
-  --accent-hover: #103c68;
-  --focus: #102d47;
+  --ink: #25324a;
+  --muted: #4e5868;
+  --page: #f6f1e7;
+  --surface: #faf7ef;
+  --subtle: #ebe5d9;
+  --line: #777365;
+  --divider: #b9b2a4;
+  --accent: #28576b;
+  --accent-hover: #1d4354;
+  --accent-ink: #fff;
+  --focus: #25324a;
+  --focus-halo: #faf7ef;
   --danger: #921e31;
   --success: #155b38;
+  --success-bg: #e6f0e6;
+  --danger-bg: #fff0f2;
+  --danger-hover: #fbe5e9;
+  --disabled-bg: #e6e1d7;
+  --disabled-ink: #55574f;
+  --disabled-line: #777365;
+  --placeholder: #58616b;
+  --dwell-fill: #c8ddd8;
   --target: 64px;
   color: var(--ink);
   background: var(--page);
+}
+:root[data-theme="blue"] {
+  --ink: #1e3045;
+  --muted: #42566a;
+  --page: #edf3f8;
+  --surface: #f4f8fc;
+  --subtle: #e3edf5;
+  --line: #687b8c;
+  --divider: #b5c2ce;
+  --accent: #245a81;
+  --accent-hover: #174464;
+  --focus: #102d47;
+  --focus-halo: #f4f8fc;
+  --disabled-bg: #e6ebef;
+  --disabled-ink: #4b5a68;
+  --disabled-line: #7a8997;
+  --dwell-fill: #c7ddf5;
+}
+:root[data-theme="slate"] {
+  color-scheme: dark;
+  --ink: #f3f1e9;
+  --muted: #c1cbd5;
+  --page: #18212b;
+  --surface: #202c38;
+  --subtle: #2a3948;
+  --line: #91a2b3;
+  --divider: #607386;
+  --accent: #a9d6e5;
+  --accent-hover: #c6e7f1;
+  --accent-ink: #18212b;
+  --focus: #f3d58d;
+  --focus-halo: #18212b;
+  --danger: #ffb4bd;
+  --danger-bg: #462832;
+  --danger-hover: #58313c;
+  --success: #b5e4c3;
+  --success-bg: #203c30;
+  --disabled-bg: #303b46;
+  --disabled-ink: #bcc5ce;
+  --disabled-line: #91a2b3;
+  --placeholder: #bdc7d0;
+  --dwell-fill: #405365;
 }
 * {
   box-sizing: border-box;
@@ -72,7 +124,7 @@ button:hover:not(:disabled),
 .primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   font-weight: 700;
 }
 .primary:hover:not(:disabled) {
@@ -85,16 +137,16 @@ select:disabled,
 textarea:disabled {
   opacity: 1;
   cursor: not-allowed;
-  background: #e6ebef;
-  color: #4b5a68;
-  border-color: #7a8997;
+  background: var(--disabled-bg);
+  color: var(--disabled-ink);
+  border-color: var(--disabled-line);
   border-style: dashed;
 }
 button[aria-pressed="true"] {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   border-color: var(--accent);
-  box-shadow: inset 0 0 0 2px #fff;
+  box-shadow: inset 0 0 0 2px var(--accent-ink);
 }
 button[aria-pressed="true"]:hover {
   background: var(--accent-hover);
@@ -102,16 +154,16 @@ button[aria-pressed="true"]:hover {
 .danger {
   color: var(--danger);
   border-color: var(--danger);
-  background: #fff5f6;
+  background: var(--danger-bg);
 }
 .danger:hover:not(:disabled) {
-  background: #fbe5e9;
+  background: var(--danger-hover);
   border-color: var(--danger);
 }
 :where(button, a, input, textarea, select, summary, [tabindex]):focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 4px;
-  box-shadow: 0 0 0 4px #fff;
+  box-shadow: 0 0 0 4px var(--focus-halo);
 }
 :where(button, a, input, textarea, select, summary) {
   scroll-margin-block: 20px;
@@ -122,7 +174,7 @@ button[aria-pressed="true"]:hover {
   inset-block-start: 8px;
   inset-inline-start: 12px;
   padding: 12px 20px;
-  background: #fff;
+  background: var(--surface);
   border: 3px solid var(--focus);
   border-radius: 8px;
   font-weight: 700;
@@ -301,7 +353,7 @@ select {
 }
 input::placeholder,
 textarea::placeholder {
-  color: #526476;
+  color: var(--placeholder);
   opacity: 1;
   font-weight: 400;
 }
@@ -340,9 +392,9 @@ form > .primary {
   margin: 8px 0 16px;
 }
 .error {
-  color: #861b2d;
-  background: #fff0f2;
-  border: 2px solid #a52b3e;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 2px solid var(--danger);
   border-inline-start-width: 6px;
   border-radius: 8px;
   padding: 14px;
@@ -437,7 +489,7 @@ form > .primary {
 input[type="file"]::file-selector-button {
   font: inherit;
   color: var(--ink);
-  background: white;
+  background: var(--surface);
   border: 2px solid var(--line);
   border-radius: 6px;
   padding: 10px;
@@ -611,7 +663,7 @@ details[open] > summary {
 .save-status {
   font-size: 0.95em;
   color: var(--success);
-  background: #eef8f1;
+  background: var(--success-bg);
   border-inline-start: 4px solid var(--success);
   padding: 10px 12px;
 }
@@ -667,21 +719,48 @@ audio {
 .access-settings {
   border-inline-start: 5px solid var(--accent);
 }
+.theme-menu {
+  margin-bottom: 20px;
+}
+.theme-options {
+  display: grid;
+  gap: 12px;
+}
+.theme-options button {
+  justify-content: flex-start;
+  text-align: start;
+}
+.theme-swatch {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.theme-swatch-cream {
+  background: #f6f1e7;
+}
+.theme-swatch-blue {
+  background: #edf3f8;
+}
+.theme-swatch-slate {
+  background: #18212b;
+}
 .dwell-target {
   outline: 4px solid var(--focus) !important;
   outline-offset: 4px;
-  box-shadow: 0 0 0 4px white !important;
+  box-shadow: 0 0 0 4px var(--focus-halo) !important;
   background-image: linear-gradient(
     to left,
-    #c7ddf5 var(--dwell-progress),
-    white var(--dwell-progress)
+    var(--dwell-fill) var(--dwell-progress),
+    var(--surface) var(--dwell-progress)
   ) !important;
   color: var(--ink) !important;
 }
 .switch-target {
   outline: 5px solid var(--focus) !important;
   outline-offset: 4px;
-  box-shadow: 0 0 0 4px white !important;
+  box-shadow: 0 0 0 4px var(--focus-halo) !important;
 }
 .vertical-scroll {
   overflow-x: auto;
@@ -906,7 +985,8 @@ audio {
   }
 }
 @media (forced-colors: active) {
-  :root {
+  :root,
+  :root[data-theme] {
     --ink: CanvasText;
     --muted: CanvasText;
     --page: Canvas;
@@ -941,6 +1021,21 @@ audio {
   }
 }
 @media print {
+  :root,
+  :root[data-theme] {
+    color-scheme: light;
+    --ink: black;
+    --muted: black;
+    --page: white;
+    --surface: white;
+    --subtle: white;
+    --accent: black;
+    --accent-ink: white;
+    --success: black;
+    --success-bg: white;
+    --danger: black;
+    --danger-bg: white;
+  }
   .topbar,
   footer,
   button,

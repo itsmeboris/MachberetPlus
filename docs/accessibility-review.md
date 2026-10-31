@@ -19,7 +19,7 @@ The browser suite uses `@axe-core/playwright` with WCAG A/AA rule tags through W
 
 Before the design fixes, scans of the first nine states found a shared footer contrast failure: `#64748b` on `#faf8f5`, measured by axe as **4.48:1** at 14 px. The capture step label had the same **4.48:1** contrast at 16 px. Both require 4.5:1 for normal text. No other tagged axe violations were reported in those initial states; this does not establish that all controls or interaction paths are accessible.
 
-## Verified result
+## Initial redesign verification (before theme options)
 
 After the final design and pointer-based image-corner changes, all **3 accessibility browser tests passed** within the full suite: **24 passed, 1 skipped** (the opt-in private-photo/model test). All **12 scanned states** had zero tagged axe violations, including both teacher and parent image editors with a synthetic uploaded worksheet. All **70 unit/API tests** and the production build passed. Independent review caught an overly restrictive mobile input hint for free-form math; it was corrected and covered by a browser assertion.
 
@@ -57,3 +57,19 @@ Use a physical Android device with TalkBack to verify Hebrew pronunciation, RTL 
 The existing end-to-end suites cover additional functional flows. Automated contrast and reflow tests support, but do not replace, an accessibility review with users.
 
 Final live verification: **7 tests passed** on Worker `e44e821a-9238-49fc-bd1a-c598f24040eb`, covering all three accessibility scenarios, three mobile/input-mode scenarios and the scanned-worksheet/voice-feedback/parent workflow. Synthetic test accounts were deleted. No database migration was needed. Reviewed screenshots are saved in `artifacts/accessible-teacher.png`, `artifacts/accessible-workbook-keypad.png` and `artifacts/accessible-teacher-review.png`.
+
+## Student color themes
+
+Warm cream is now the default across the app. The student toolbar has a visible `צבעי המסך` button showing the current theme. Its menu offers cream, pale blue and dark slate with names, swatches and selected text/pressed state. Selection and reset save immediately per student; an actor-scoped JSON patch changes only the theme. Failed saves restore the previous palette and show an error. Closing restores keyboard focus. Unsaved or saved theme changes cannot be overwritten by a delayed initial preferences request.
+
+| Theme | Main text on panel | Control border on panel | Primary button text |
+| --- | --- | --- | --- |
+| Cream | 12.01:1 | 4.43:1 | 7.88:1 |
+| Pale blue | 12.58:1 | 4.10:1 | 7.36:1 |
+| Dark slate | 12.56:1 | 5.43:1 | 10.41:1 |
+
+Ratios are calculated from the actual CSS palette tokens. Browser axe scans cover each theme's workbook and choice menu, plus the dark error state. Checks cover automatic persistence across reload, settings preservation, reset, logout cleanup, focus restoration, late-load protection, 320px reflow, forced colors and print tokens. The initial page may briefly show cream before authenticated student preferences load; no account-specific theme is retained on the unauthenticated page.
+
+These are presentation options, not diagnosis-specific treatments. User comfort and actual Android/TalkBack behavior still need participant testing. The research basis remains W3C personalization/contrast guidance and Scope's advice on offering light tinted backgrounds; no universal calming or learning benefit is claimed.
+
+Final theme release evidence: 70 unit/API tests, 25 browser tests (one optional OCR test skipped), build and seven targeted final checks passed. Eight live scenarios passed on Worker 6d29c425-9d89-40ac-99d2-bb0e661c1c01, including the menu and all three palettes. Synthetic accounts cleaned up.

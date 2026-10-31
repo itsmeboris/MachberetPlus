@@ -1,8 +1,14 @@
 # Readiness evidence — 2026-10-31
 
-## Accessible design update
+## Student theme menu update
 
-Current deployed version: `e44e821a-9238-49fc-bd1a-c598f24040eb`. Reworked shared colors, typography, field boundaries, selected/disabled states, keyboard focus, skip navigation, question focus and non-drag crop controls. All 70 unit/API tests, 24 local browser tests and production build passed; one opt-in private-photo OCR test was skipped. After a live-only transient contrast finding, removed button color interpolation and reran the three accessibility tests successfully. See accessibility-review.md for measured contrast, scope and actual-device limitations.
+Current deployed version: `6d29c425-9d89-40ac-99d2-bb0e661c1c01`. Warm cream default plus pale blue/dark slate, a direct student toolbar menu, immediate per-student saving and a reset that preserves other settings. Readable state/focus/error palettes and forced-color/print overrides included. Independent review's save-focus and delayed-load races fixed and regression-tested.
+
+Verification: 70 unit/API tests, 25 local browser tests (one optional private-photo test skipped), build, seven targeted browser checks after the final focus/loading fixes, and eight final live scenarios passed. Live checks cover theme persistence/reset/failure recovery, contrast, keyboard/mobile input and the worksheet-to-parent workflow. Synthetic accounts deleted; no migration. Actual Android/TalkBack participant testing and initial cream flash before authentication remain documented limitations.
+
+## Earlier accessible design update
+
+Previously deployed version: `e44e821a-9238-49fc-bd1a-c598f24040eb`. Reworked shared colors, typography, field boundaries, selected/disabled states, keyboard focus, skip navigation, question focus and non-drag crop controls. All 70 unit/API tests, 24 local browser tests and production build passed; one opt-in private-photo OCR test was skipped. After a live-only transient contrast finding, removed button color interpolation and reran the three accessibility tests successfully. See accessibility-review.md for measured contrast, scope and actual-device limitations.
 
 ## Earlier free local handwriting update
 

@@ -69,6 +69,7 @@ students.delete("/:id", async (c) => {
   return c.json({ ok: true });
 });
 export const preferences = z.object({
+  theme: z.enum(["cream", "blue", "slate"]).default("cream"),
   mode: z.enum(["standard", "motor", "gaze", "switch"]).default("standard"),
   dwellMs: z.number().int().min(800).max(1500).default(1000),
   dwellSource: z.enum(["app", "device", "off"]).default("off"),

@@ -27,6 +27,8 @@ The phone math keypad includes decimals, with labeled extra symbols behind a tog
 
 The shared accessible design covers teacher, student and parent screens, with stronger contrast, scalable Hebrew text, visible keyboard focus and non-drag crop controls. See the [accessibility review](docs/accessibility-review.md) for measured results and remaining physical-device checks.
 
+Warm cream is the default. Students can open **צבעי המסך** in the toolbar to choose **קרם חמים**, **כחול בהיר**, or **כהה**. Choices save automatically per student; **החזרת צבעי ברירת המחדל** restores cream without changing other accessibility settings. The menu marks the selected theme with text and a pressed state, provides large labeled choices, and supports close/Escape with focus restoration.
+
 ```powershell
 npm test
 npm run build

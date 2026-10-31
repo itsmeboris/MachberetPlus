@@ -12,6 +12,7 @@ import type { Preferences, User } from "../types";
 import { ErrorMessage, Panel, useAction } from "../components/Common";
 import { DwellActivation, mathSpeech } from "./interaction";
 const defaults: Preferences = {
+  theme: "cream",
   mode: "standard",
   dwellMs: 1000,
   dwellSource: "off",
@@ -21,6 +22,7 @@ const defaults: Preferences = {
   switchSelect: "Enter",
 };
 const AccessContext = createContext(defaults);
+const themeNames = { cream: "קרם חמים", blue: "כחול בהיר", slate: "כהה" };
 export const usePreferences = () => useContext(AccessContext);
 export function speakHebrew(text: string) {
   if (!window.speechSynthesis)
@@ -52,11 +54,53 @@ export function Access({
   const root = useRef<HTMLDivElement>(null);
   const settingsButton = useRef<HTMLButtonElement>(null);
   const settingsId = useId();
+  const themeId = useId();
+  const themeButton = useRef<HTMLButtonElement>(null);
+  const [themesOpen, setThemesOpen] = useState(false);
+  const preferencesEdited = useRef(false);
+  const focusAfterClose = useRef<HTMLButtonElement | null>(null);
   const { run, error, busy } = useAction();
   useEffect(() => {
+    if (!busy && focusAfterClose.current) {
+      focusAfterClose.current.focus();
+      focusAfterClose.current = null;
+    }
+  }, [busy, themesOpen, settings]);
+  function closeThemes() {
+    focusAfterClose.current = themeButton.current;
+    setThemesOpen(false);
+  }
+  function chooseTheme(theme: Preferences["theme"]) {
+    preferencesEdited.current = true;
+    const previous = preferences.theme;
+    void run(async () => {
+      setPreferences((p) => ({ ...p, theme }));
+      try {
+        await api("/preferences", "PATCH", { theme });
+        closeThemes();
+      } catch (error) {
+        setPreferences((p) => ({ ...p, theme: previous }));
+        throw error;
+      }
+    });
+  }
+  useEffect(() => {
+    document.documentElement.dataset.theme = preferences.theme;
+    return () => {
+      delete document.documentElement.dataset.theme;
+    };
+  }, [preferences.theme]);
+  useEffect(() => {
+    let active = true;
     void api<Preferences>("/preferences")
-      .then((saved) => setPreferences({ ...defaults, ...saved }))
+      .then((saved) => {
+        if (active && !preferencesEdited.current)
+          setPreferences({ ...defaults, ...saved });
+      })
       .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -241,11 +285,28 @@ export function Access({
         <div className="access-toolbar">
           <button
             ref={settingsButton}
-            onClick={() => setSettings(!settings)}
+            disabled={busy}
+            onClick={() => {
+              preferencesEdited.current = true;
+              setThemesOpen(false);
+              setSettings(!settings);
+            }}
             aria-expanded={settings}
             aria-controls={settingsId}
           >
             התאמות אישיות
+          </button>
+          <button
+            ref={themeButton}
+            disabled={busy}
+            aria-expanded={themesOpen}
+            aria-controls={themeId}
+            onClick={() => {
+              setSettings(false);
+              setThemesOpen(!themesOpen);
+            }}
+          >
+            צבעי המסך: {themeNames[preferences.theme]}
           </button>
           {(preferences.dwellSource === "app" ||
             preferences.mode === "switch") && (
@@ -260,6 +321,57 @@ export function Access({
           <span className="muted" aria-live="polite">
             {preferences.mode === "switch" ? scanLabel : ""}
           </span>
+        </div>
+        <div
+          id={themeId}
+          hidden={!themesOpen}
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && !busy) {
+              event.stopPropagation();
+              closeThemes();
+            }
+          }}
+        >
+          {themesOpen && (
+            <Panel className="theme-menu">
+              <h2>איזה צבע נוח לי?</h2>
+              <p>בחרו צבע למסך. הבחירה נשמרת מיד ורק עבורכם.</p>
+              <div
+                className="theme-options"
+                role="group"
+                aria-label="בחירת צבעי המסך"
+              >
+                {(Object.keys(themeNames) as Preferences["theme"][]).map(
+                  (theme) => (
+                    <button
+                      key={theme}
+                      type="button"
+                      disabled={busy}
+                      aria-pressed={preferences.theme === theme}
+                      onClick={() => chooseTheme(theme)}
+                    >
+                      <span
+                        className={`theme-swatch theme-swatch-${theme}`}
+                        aria-hidden="true"
+                      />
+                      {themeNames[theme]}
+                      {preferences.theme === theme ? " — נבחר" : ""}
+                    </button>
+                  ),
+                )}
+              </div>
+              <div className="actions">
+                <button disabled={busy} onClick={() => chooseTheme("cream")}>
+                  החזרת צבעי ברירת המחדל
+                </button>
+                <button disabled={busy} onClick={closeThemes}>
+                  סגירת בחירת הצבעים
+                </button>
+              </div>
+              {busy && <p role="status">שומרים את בחירת הצבעים…</p>}
+              <ErrorMessage error={error} />
+            </Panel>
+          )}
         </div>
         <div id={settingsId} hidden={!settings}>
           {settings && (
@@ -380,8 +492,8 @@ export function Access({
                     setPreferences(
                       await api("/preferences", "PUT", preferences),
                     );
+                    focusAfterClose.current = settingsButton.current;
                     setSettings(false);
-                    settingsButton.current?.focus();
                   })
                 }
               >
