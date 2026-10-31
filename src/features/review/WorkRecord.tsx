@@ -8,21 +8,33 @@ import { decisionLabel } from "./decisions";
 export function WorkRecord({
   assignment: a,
   parentToken,
+  headingLevel = 1,
 }: {
   assignment: Assignment;
   parentToken?: string;
+  headingLevel?: 1 | 2;
 }) {
   const { run, error, busy } = useAction();
+  const Title = headingLevel === 1 ? "h1" : "h2";
+  const QuestionTitle = headingLevel === 1 ? "h2" : "h3";
   return (
     <Panel className="work-record">
-      <p className="eyebrow">{statuses[a.status]}</p>
-      <h1>{a.title}</h1>
+      <p className="status-label">{statuses[a.status]}</p>
+      <Title>
+        <bdi>{a.title}</bdi>
+      </Title>
       <Audio id={a.instructionsId} parentToken={parentToken} />
       {a.exercises.map((q, i) => (
         <article className="record-question" key={q.id}>
-          <h2>
-            {i + 1}. {q.prompt}
-          </h2>
+          <QuestionTitle>
+            תרגיל {i + 1}
+            {q.prompt && (
+              <>
+                {" "}
+                · <bdi>{q.prompt}</bdi>
+              </>
+            )}
+          </QuestionTitle>
           {q.math && (
             <p className="math" dir="ltr">
               <MathText value={q.math} />
@@ -36,11 +48,20 @@ export function WorkRecord({
           {a.feedback[q.id] && (
             <div className="feedback-note">
               {a.feedback[q.id].sticker && (
-                <span aria-label="מדבקה מהמורה">
+                <span
+                  role="img"
+                  aria-label={
+                    a.feedback[q.id].sticker === "heart"
+                      ? "גאים בך"
+                      : a.feedback[q.id].sticker === "effort"
+                        ? "רואים את המאמץ"
+                        : "כל הכבוד"
+                  }
+                >
                   {a.feedback[q.id].sticker === "heart" ? "♡" : "☆"}
                 </span>
               )}
-              <p>{a.feedback[q.id].text}</p>
+              <p dir="auto">{a.feedback[q.id].text}</p>
               <Audio id={a.feedback[q.id].audioId} parentToken={parentToken} />
             </div>
           )}

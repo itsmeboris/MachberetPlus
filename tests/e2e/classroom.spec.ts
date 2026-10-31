@@ -23,7 +23,7 @@ test("one named assignment with unnamed exercises reaches the whole classroom wi
   await page.getByRole("button", { name: "הוספת התלמידים לכיתה" }).click();
   await expect(page.getByLabel("צירוף תלמיד קיים")).toBeVisible();
   await page.getByText(/קישורי כניסה וניהול תלמידים/).click();
-  await page.getByRole("button", { name: "קישור כניסה עבור דנה" }).click();
+  await page.getByRole("button", { name: "חידוש קישור אישי — קישור כניסה עבור דנה" }).click();
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   const link = await page.getByLabel("קישור כניסה לתלמיד").inputValue();
   await page.getByRole("button", { name: "העתקת הקישור", exact: true }).click();

@@ -49,6 +49,9 @@ export async function studentFixture(
   });
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
+    ...(new URL(origin).hostname === "127.0.0.1"
+      ? { extraHTTPHeaders: { "CF-Connecting-IP": testClientIP } }
+      : {}),
   });
   const student = await context.newPage();
   student.on("pageerror", (error) =>

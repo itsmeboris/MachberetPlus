@@ -20,6 +20,7 @@ export function Review({
       initial.feedback,
     ),
     [link, setLink] = useState("");
+  const [notice, setNotice] = useState("");
   const [pendingAudio, setPendingAudio] = useState<Record<string, boolean>>({});
   const audioPending = Object.values(pendingAudio).some(Boolean);
   const { run, busy, error } = useAction();
@@ -48,7 +49,10 @@ export function Review({
           <p className="eyebrow">בדיקת עבודת התלמיד</p>
           <h1>בדיקת המשימה</h1>
           <p>
-            {a.title} · {statuses[a.status]}
+            <bdi>{a.title}</bdi>
+          </p>
+          <p className="status-label" role="status">
+            {statuses[a.status]}
           </p>
         </div>
       </div>
@@ -203,9 +207,10 @@ export function Review({
           )}
         </Panel>
       ) : (
-        <WorkRecord assignment={a} />
+        <WorkRecord assignment={a} headingLevel={2} />
       )}
       <ErrorMessage error={error} />
+      <p role="status">{notice}</p>
       {["reviewed", "parent_acknowledged"].includes(a.status) && (
         <Panel>
           <h2>תיקון העבודה לאחר הבדיקה</h2>
@@ -251,6 +256,7 @@ export function Review({
                   {},
                 );
                 setLink(`${location.origin}/p/${result.token}`);
+                setNotice("הקישור להורה נוצר. אפשר להעתיק או לשתף אותו.");
               })
             }
           >
@@ -269,11 +275,18 @@ export function Review({
                   href={`https://wa.me/?text=${encodeURIComponent(`עבודה חדשה במחברת+ — מוזמנים לעבור יחד: ${link}`)}`}
                   target="_blank"
                   rel="noreferrer"
+                  aria-label="שיתוף ב־WhatsApp (נפתח בחלון חדש)"
                 >
                   שיתוף ב־WhatsApp
                 </a>
                 <button
-                  onClick={() => run(() => navigator.clipboard.writeText(link))}
+                  disabled={busy}
+                  onClick={() =>
+                    run(async () => {
+                      await navigator.clipboard.writeText(link);
+                      setNotice("הקישור הועתק.");
+                    })
+                  }
                 >
                   העתקת הקישור
                 </button>
@@ -281,11 +294,13 @@ export function Review({
             </>
           )}
           <button
+            className="danger"
             disabled={busy}
             onClick={() =>
               run(async () => {
                 await api(`/assignments/${a.id}/parent-links`, "DELETE", {});
                 setLink("");
+                setNotice("קישורי ההורה למשימה בוטלו.");
               })
             }
           >

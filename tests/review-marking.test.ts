@@ -56,3 +56,20 @@ it("shows teacher decisions and unmarked answers in shared records and exports",
     expect(output).toContain("לא סומן");
   }
 });
+
+it("keeps a single page heading when records are embedded in a review", () => {
+  const html = renderToStaticMarkup(
+    createElement(Review, {
+      assignment: { ...assignment, status: "reviewed" },
+      onBack() {},
+    }),
+  );
+  expect(html.match(/<h1>/g)).toHaveLength(1);
+  expect(html).toContain("<h2><bdi>בדיקה</bdi></h2>");
+  expect(html).toContain("<h3>תרגיל 1");
+  const standalone = renderToStaticMarkup(
+    createElement(WorkRecord, { assignment }),
+  );
+  expect(standalone).toContain("<h1><bdi>בדיקה</bdi></h1>");
+  expect(standalone).toContain("<h2>תרגיל 1");
+});

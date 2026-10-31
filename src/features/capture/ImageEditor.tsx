@@ -2,6 +2,12 @@ import { useEffect, useId, useRef, useState, type PointerEvent } from "react";
 import { fullImageCorners, moveCorner, perspectiveMap } from "./geometry";
 import { ErrorMessage, useAction } from "../../components/Common";
 import "./ImageEditor.css";
+const cornerNames = [
+  "שמאלית עליונה",
+  "ימנית עליונה",
+  "ימנית תחתונה",
+  "שמאלית תחתונה",
+];
 export async function canvasBlob(canvas: HTMLCanvasElement) {
   return new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
@@ -19,6 +25,7 @@ export function ImageEditor({
   onChange: (blob: Blob) => void;
 }) {
   const [corners, setCorners] = useState(fullImageCorners);
+  const [selectedCorner, setSelectedCorner] = useState(0);
   const [rotatedUrl, setRotatedUrl] = useState<string>();
   const preview = useRef<HTMLDivElement>(null);
   const helpId = useId();
@@ -31,6 +38,7 @@ export function ImageEditor({
   useEffect(() => {
     setRotatedUrl(undefined);
     setCorners(fullImageCorners());
+    setSelectedCorner(0);
     setEditing(false);
   }, [url]);
   const [editing, setEditing] = useState(false);
@@ -38,6 +46,15 @@ export function ImageEditor({
   function reset() {
     setRotatedUrl(undefined);
     setCorners(fullImageCorners());
+    setSelectedCorner(0);
+  }
+  function nudge(index: number, dx: number, dy: number) {
+    setCorners((old) =>
+      moveCorner(old, index, {
+        x: old[index].x + dx,
+        y: old[index].y + dy,
+      }),
+    );
   }
   function drag(event: PointerEvent<HTMLButtonElement>, index: number) {
     if (busy || !event.currentTarget.hasPointerCapture(event.pointerId)) return;
@@ -156,8 +173,11 @@ export function ImageEditor({
                 className="image-corner"
                 disabled={busy}
                 style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                aria-label={`פינה ${["שמאלית עליונה", "ימנית עליונה", "ימנית תחתונה", "שמאלית תחתונה"][i]}`}
+                aria-label={`פינה ${i + 1} — ${cornerNames[i]}`}
+                aria-pressed={selectedCorner === i}
                 aria-describedby={helpId}
+                onFocus={() => setSelectedCorner(i)}
+                onClick={() => setSelectedCorner(i)}
                 onPointerDown={(event) => {
                   event.preventDefault();
                   event.currentTarget.focus();
@@ -179,12 +199,7 @@ export function ImageEditor({
                   if (!direction) return;
                   event.preventDefault();
                   const step = event.shiftKey ? 5 : 1;
-                  setCorners((old) =>
-                    moveCorner(old, i, {
-                      x: old[i].x + direction[0] * step,
-                      y: old[i].y + direction[1] * step,
-                    }),
-                  );
+                  nudge(i, direction[0] * step, direction[1] * step);
                 }}
               >
                 <span aria-hidden="true">{i + 1}</span>
@@ -203,9 +218,43 @@ export function ImageEditor({
         <fieldset disabled={busy} className="image-editor-controls">
           <legend>התאמת התמונה</legend>
           <p id={helpId}>
-            גררו את ארבע הפינות אל קצות הדף. במקלדת: בחרו פינה בעזרת Tab והזיזו
+            בחרו פינה והזיזו אותה בעזרת כפתורי הכיוון. כל לחיצה מזיזה באחוז אחד
+            מגודל התמונה. אפשר גם לגרור פינה. במקלדת: בחרו פינה בעזרת Tab והזיזו
             אותה בעזרת החצים.
           </p>
+          <label>
+            בחירת פינה להזזה
+            <select
+              value={selectedCorner}
+              onChange={(event) =>
+                setSelectedCorner(Number(event.target.value))
+              }
+            >
+              {cornerNames.map((name, index) => (
+                <option key={name} value={index}>
+                  פינה {index + 1} — {name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div
+            className="image-corner-nudges"
+            role="group"
+            aria-label="הזזת הפינה שנבחרה"
+          >
+            <button type="button" onClick={() => nudge(selectedCorner, 0, -1)}>
+              <span aria-hidden="true">↑ </span>הזזה למעלה
+            </button>
+            <button type="button" onClick={() => nudge(selectedCorner, 0, 1)}>
+              <span aria-hidden="true">↓ </span>הזזה למטה
+            </button>
+            <button type="button" onClick={() => nudge(selectedCorner, -1, 0)}>
+              <span aria-hidden="true">← </span>הזזה שמאלה
+            </button>
+            <button type="button" onClick={() => nudge(selectedCorner, 1, 0)}>
+              <span aria-hidden="true">→ </span>הזזה ימינה
+            </button>
+          </div>
           <p className="muted">השינויים יישמרו רק בלחיצה על שמירת התמונה.</p>
           <div className="actions">
             <button type="button" onClick={() => run(() => transform(true))}>

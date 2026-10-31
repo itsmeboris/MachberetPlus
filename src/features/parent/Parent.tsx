@@ -20,12 +20,15 @@ export function Parent({ token }: { token: string }) {
       <h1>מסתכלים על הדרך שעשינו</h1>
       <p>העבודה והמשוב מהמורה, במקום אחד.</p>
       <ErrorMessage error={error} />
+      {!a && !error && <p role="status">טוענים את העבודה והמשוב…</p>}
       {a && (
         <>
-          <WorkRecord assignment={a} parentToken={token} />
+          <WorkRecord assignment={a} parentToken={token} headingLevel={2} />
           <Panel>
             {ack ? (
-              <h2 role="status">האישור נשמר. תודה!</h2>
+              <div role="status">
+                <h2>האישור נשמר. תודה!</h2>
+              </div>
             ) : (
               <>
                 <h2>עברתם על העבודה יחד?</h2>

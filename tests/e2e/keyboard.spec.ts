@@ -48,6 +48,9 @@ test("mobile keypad stays compact, enters decimals and explains mathematical sym
     await student.getByRole("button", { name: "פתיחת מקלדת" }).click();
   }
   const keypad = student.locator(".keyboard-groups");
+  await expect(
+    student.getByLabel("התשובה שלי", { exact: true }),
+  ).toHaveAttribute("inputmode", "text");
   for (const width of [320, 390]) {
     await student.setViewportSize({ width, height: 844 });
     const row = keypad.locator(".keyboard-row").first();

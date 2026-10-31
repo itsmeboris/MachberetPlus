@@ -11,22 +11,33 @@
 .image-editor-preview .image-corner {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
-  min-height: 44px;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
   padding: 0;
   border: 3px solid white;
   border-radius: 50%;
-  background: #1d4ed8;
+  background: var(--accent);
   color: white;
-  box-shadow: 0 0 0 2px #1d4ed8;
+  box-shadow: 0 0 0 2px var(--accent);
   touch-action: none;
   cursor: grab;
   user-select: none;
 }
 .image-editor-preview .image-corner:focus-visible {
-  outline: 4px solid #bd4c00;
+  outline: 4px solid var(--focus);
   outline-offset: 4px;
+}
+.image-editor-preview .image-corner[aria-pressed="true"] {
+  border-style: double;
+  border-width: 6px;
+  box-shadow: 0 0 0 3px var(--accent);
+}
+.image-corner-nudges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 16px;
 }
 .image-editor-controls {
   margin-top: 0;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { api, ApiError } from "../../api";
 import { type Answer, type Assignment, type User, statuses } from "../../types";
 import { Audio, ErrorMessage, Panel, useAction } from "../../components/Common";
@@ -140,6 +140,8 @@ function Workbook({
 }) {
   const editable = ["assigned", "in_progress", "returned"].includes(a.status);
   const prefs = usePreferences();
+  const keyboardId = useId();
+  const questionHeading = useRef<HTMLHeadingElement>(null);
   const activeCell = useRef<string | undefined>(undefined);
   const key = `machberet:${user.id}:${a.id}`;
   const [recovered] = useState<{
@@ -172,6 +174,10 @@ function Workbook({
     [keyboard, setKeyboard] = useState(prefs.mode === "switch"),
     [focus, setFocus] = useState(prefs.spotlight);
   useEffect(() => setFocus(prefs.spotlight), [prefs.spotlight]);
+  useEffect(() => {
+    activeCell.current = undefined;
+    questionHeading.current?.focus();
+  }, [index]);
   const revision = useRef(recovered?.revision ?? a.revision),
     latest = useRef(answers),
     saving = useRef(false),
@@ -346,7 +352,9 @@ function Workbook({
             הקראת השאלה
           </button>
         </div>
-        <h1>{q.prompt}</h1>
+        <h1 ref={questionHeading} tabIndex={-1}>
+          {q.prompt}
+        </h1>
         {q.math && (
           <div className="math" dir="ltr">
             <MathText value={q.math} />
@@ -368,10 +376,16 @@ function Workbook({
             <Audio id={a.feedback[q.id].audioId} />
           </div>
         )}
-        <button onClick={() => setKeyboard(!keyboard)}>
+        <button
+          aria-expanded={keyboard}
+          aria-controls={keyboardId}
+          onClick={() => setKeyboard(!keyboard)}
+        >
           {keyboard ? "סגירת המקלדת" : "פתיחת מקלדת"}
         </button>
-        {keyboard && <Keyboard text={q.kind === "text"} onKey={keypress} />}{" "}
+        <div id={keyboardId} hidden={!keyboard}>
+          {keyboard && <Keyboard text={q.kind === "text"} onKey={keypress} />}
+        </div>
         <div className="actions">
           <button disabled={!index} onClick={() => setIndex((i) => i - 1)}>
             השאלה הקודמת

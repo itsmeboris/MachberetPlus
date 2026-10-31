@@ -28,6 +28,7 @@ export function Keyboard({
   return (
     <div
       className="keyboard-groups"
+      role="group"
       dir="ltr"
       aria-label={text ? "מקלדת עברית" : "מקלדת חשבון"}
     >

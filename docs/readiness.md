@@ -1,8 +1,12 @@
 # Readiness evidence — 2026-10-31
 
-## Free local handwriting update
+## Accessible design update
 
-Current deployed version: `1a8c25d8-fd1e-4440-b3eb-f94e84014dd1`. Pix2Text-MFR-1.5 now recognizes handwritten math on-device by default. All 69 unit/API tests and 21 browser tests passed, including both private original photos through the actual WASM model. Build and independent review passed. The live-site test also passed both photos with exact equations, zero upload/POST requests during recognition, and cached second-photo recognition with the model host blocked. Live timings: 19.8s first run, 4.0s cached, on desktop Chromium. The synthetic account was deleted afterward.
+Current deployed version: `e44e821a-9238-49fc-bd1a-c598f24040eb`. Reworked shared colors, typography, field boundaries, selected/disabled states, keyboard focus, skip navigation, question focus and non-drag crop controls. All 70 unit/API tests, 24 local browser tests and production build passed; one opt-in private-photo OCR test was skipped. After a live-only transient contrast finding, removed button color interpolation and reran the three accessibility tests successfully. See accessibility-review.md for measured contrast, scope and actual-device limitations.
+
+## Earlier free local handwriting update
+
+Previously deployed version: `1a8c25d8-fd1e-4440-b3eb-f94e84014dd1`. Pix2Text-MFR-1.5 now recognizes handwritten math on-device by default. All 69 unit/API tests and 21 browser tests passed, including both private original photos through the actual WASM model. Build and independent review passed. The live-site test also passed both photos with exact equations, zero upload/POST requests during recognition, and cached second-photo recognition with the model host blocked. Live timings: 19.8s first run, 4.0s cached, on desktop Chromium. The synthetic account was deleted afterward.
 
 Review found saved-source cancellation after navigation and mixed-fraction meaning changes; both were fixed, regression-tested and re-reviewed. No database migration or server inference changes. Private photos/derived crops and downloaded research models remain outside Git. The model handles math, not handwritten Hebrew prose; actual Android speed/memory and broader handwriting accuracy remain unverified. See free-handwriting.md for model comparison, licenses, download size and limits.
 
@@ -58,3 +62,6 @@ Controls use 64px standard and 88px motor/gaze/switch targets, 20px gaps, primar
 The report shows review completion separately from observed blocked sessions. Observations are not assignment-linked, so reconcile with a minimal incident log to measure review *without* a blocker. Timings are observer-entered. Interface help is separated from teaching help and compared within student/input mode; use the exported observations to stratify the pooled app/timing summaries by mode. Parent rates separate still-open 48-hour windows. Zero-baseline assistance has no defined percentage reduction.
 
 Recovery covers unsent drafts and resumed online sessions, not a fully offline service. Print/PDF is not formally validated accessible PDF. Voice feedback is embedded in the digital HTML download, not playable on paper.
+
+
+Final accessibility release live verification: 7 scenarios passed on e44e821a-9238-49fc-bd1a-c598f24040eb; synthetic accounts cleaned up. See accessibility-review.md.

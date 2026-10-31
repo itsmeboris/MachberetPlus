@@ -25,6 +25,8 @@ The phone math keypad includes decimals, with labeled extra symbols behind a tog
 
 ## Verification
 
+The shared accessible design covers teacher, student and parent screens, with stronger contrast, scalable Hebrew text, visible keyboard focus and non-drag crop controls. See the [accessibility review](docs/accessibility-review.md) for measured results and remaining physical-device checks.
+
 ```powershell
 npm test
 npm run build

@@ -36,10 +36,19 @@
 }
 .review-decisions label {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
   cursor: pointer;
+}
+.review-decisions label:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--subtle);
+  font-weight: 700;
 }
 .review-decisions input[type="radio"] {
   width: 20px;

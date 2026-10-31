@@ -28,6 +28,9 @@ export function App() {
   }, []);
   return (
     <>
+      <a className="skip-link" href="#main-content">
+        דילוג לתוכן הראשי
+      </a>
       <header className="topbar">
         <a href="/" className="brand" aria-label="מחברת פלוס">
           <span className="brand-icon" aria-hidden="true">
@@ -38,7 +41,9 @@ export function App() {
         <span className="tagline">לומדים בקצב שלך</span>
         {user && (
           <div className="user-menu">
-            <span>שלום, {user.name}</span>
+            <span>
+              שלום, <bdi>{user.name}</bdi>
+            </span>
             <button
               onClick={async () => {
                 await api("/auth/logout", "POST", {});
@@ -50,7 +55,7 @@ export function App() {
           </div>
         )}
       </header>
-      <main>
+      <main id="main-content" tabIndex={-1}>
         {loading ? (
           <p role="status">טוענים את המחברת…</p>
         ) : captureToken ? (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { type Assignment, statuses } from "../types";
 import { ErrorMessage, Panel, useAction } from "../components/Common";
@@ -22,6 +22,13 @@ export function Teacher() {
     [pair, setPair] = useState(""),
     [captureLink, setCaptureLink] = useState("");
   const { run, busy, error } = useAction();
+  const previousView = useRef(view);
+  useEffect(() => {
+    if (previousView.current !== view) {
+      document.getElementById("main-content")?.focus();
+      previousView.current = view;
+    }
+  }, [view]);
   async function refresh() {
     const [s, a, rooms] = await Promise.all([
       api("/students"),
@@ -124,13 +131,18 @@ export function Teacher() {
                           ? "הכנה שנשלחה לכיתה"
                           : statuses[a.status]}
                       </span>
-                      <h3>{a.title}</h3>
+                      <h4 id={`assignment-title-${a.id}`}>
+                        <bdi>{a.title}</bdi>
+                      </h4>
                       <p>
-                        {students.find((s) => s.id === a.studentId)?.name} ·{" "}
-                        {a.exercises.length} תרגילים
+                        <bdi>
+                          {students.find((s) => s.id === a.studentId)?.name}
+                        </bdi>{" "}
+                        · {a.exercises.length} תרגילים
                       </p>
                     </div>
                     <button
+                      aria-describedby={`assignment-title-${a.id}`}
                       disabled={!!a.preparedDistributionId}
                       onClick={() => {
                         setSelected(a);
@@ -178,8 +190,12 @@ export function Teacher() {
                   <span className="avatar" aria-hidden="true">
                     {s.name.slice(0, 1)}
                   </span>
-                  <strong>{s.name}</strong>
+                  <strong>
+                    <bdi>{s.name}</bdi>
+                  </strong>
                   <button
+                    disabled={busy}
+                    aria-label={`בקשת צילום מהורה עבור ${s.name}`}
                     onClick={() =>
                       run(async () => {
                         const draft = await api("/assignments", "POST", {
@@ -200,7 +216,8 @@ export function Teacher() {
                     בקשת צילום מהורה
                   </button>
                   <button
-                    aria-label={`קישור כניסה עבור ${s.name}`}
+                    disabled={busy}
+                    aria-label={`חידוש קישור אישי — קישור כניסה עבור ${s.name}`}
                     onClick={() =>
                       run(async () => {
                         const { code } = await api(
@@ -215,6 +232,9 @@ export function Teacher() {
                     חידוש קישור אישי
                   </button>
                   <button
+                    className="danger"
+                    disabled={busy}
+                    aria-label={`ביטול קישור כניסה עבור ${s.name}`}
                     onClick={() =>
                       run(async () => {
                         await api(`/students/${s.id}/pairing`, "DELETE", {});
@@ -225,6 +245,8 @@ export function Teacher() {
                     ביטול קישור כניסה
                   </button>
                   <button
+                    className="danger"
+                    disabled={busy}
                     aria-label={`מחיקת ${s.name}`}
                     onClick={() => {
                       if (confirm("למחוק את התלמיד וכל עבודותיו?"))
@@ -239,9 +261,16 @@ export function Teacher() {
                 </div>
               ))}
             </details>
-            <button onClick={() => setAdding(!adding)}>＋ הוספת תלמיד</button>
+            <button
+              aria-expanded={adding}
+              aria-controls="add-student-form"
+              onClick={() => setAdding(!adding)}
+            >
+              ＋ הוספת תלמיד
+            </button>
             {adding && (
               <form
+                id="add-student-form"
                 onSubmit={(e) => {
                   e.preventDefault();
                   void run(async () => {
@@ -258,6 +287,7 @@ export function Teacher() {
                   שם התלמיד
                   <input
                     required
+                    dir="auto"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -275,9 +305,11 @@ export function Teacher() {
               </form>
             )}
             {pair && (
-              <label>
-                קישור כניסה לתלמיד
-                <input dir="ltr" readOnly value={pair} />
+              <div>
+                <label>
+                  קישור כניסה לתלמיד
+                  <input dir="ltr" readOnly value={pair} />
+                </label>
                 <small>
                   קישור אישי לשימוש חוזר במשך שבעה ימים. זהו תוקף הקישור לכניסה,
                   לא משך העבודה. חידוש מבטל את הקישור הקודם.
@@ -300,7 +332,7 @@ export function Teacher() {
                     שיתוף הקישור
                   </button>
                 )}
-              </label>
+              </div>
             )}
           </Panel>
           <p className="muted">צילום ומיקרופון מופעלים רק לפי בקשה מפורשת.</p>
@@ -311,6 +343,7 @@ export function Teacher() {
               את כל התלמידים, העבודות, ההקלטות והתצפיות שלו.
             </p>
             <button
+              className="danger"
               disabled={busy}
               onClick={() => {
                 if (confirm("למחוק לצמיתות את החשבון ואת כל המידע שלו?"))
@@ -364,6 +397,7 @@ function ClassroomManager({
           שם כיתה חדשה
           <input
             required
+            dir="auto"
             maxLength={80}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -392,8 +426,12 @@ function ClassroomManager({
             <summary>תלמידי הכיתה ({room.students.length})</summary>
             {room.students.map((s) => (
               <div className="student-row" key={s.id}>
-                <strong>{s.name}</strong>
+                <strong>
+                  <bdi>{s.name}</bdi>
+                </strong>
                 <button
+                  className="danger"
+                  aria-label={`הסרה מהכיתה של ${s.name}`}
                   disabled={busy}
                   onClick={() =>
                     run(async () => {
@@ -436,6 +474,7 @@ function ClassroomManager({
               תלמידים חדשים — שם אחד בכל שורה
               <textarea
                 required
+                dir="auto"
                 value={names}
                 onChange={(e) => setNames(e.target.value)}
               />

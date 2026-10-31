@@ -51,6 +51,7 @@ export function Auth({ onLogin }: { onLogin: (u: User) => void }) {
         ) : (
           <>
             <form
+              aria-busy={busy}
               onSubmit={(e) => {
                 e.preventDefault();
                 void run(async () =>
@@ -70,6 +71,7 @@ export function Auth({ onLogin }: { onLogin: (u: User) => void }) {
                   <input
                     required
                     autoComplete="name"
+                    dir="auto"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -138,7 +140,7 @@ export function Auth({ onLogin }: { onLogin: (u: User) => void }) {
                     : "כניסה למרחב שלי"}
               </button>
             </form>
-            <button onClick={() => setRegister(!register)}>
+            <button disabled={busy} onClick={() => setRegister(!register)}>
               {register ? "כבר יש לי חשבון" : "יצירת חשבון מורה"}
             </button>
           </>

@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useRef,
+  useId,
   useState,
   type ReactNode,
 } from "react";
@@ -49,6 +50,8 @@ export function Access({
     [paused, setPaused] = useState(false),
     [scanLabel, setScanLabel] = useState("");
   const root = useRef<HTMLDivElement>(null);
+  const settingsButton = useRef<HTMLButtonElement>(null);
+  const settingsId = useId();
   const { run, error, busy } = useAction();
   useEffect(() => {
     void api<Preferences>("/preferences")
@@ -237,8 +240,10 @@ export function Access({
       >
         <div className="access-toolbar">
           <button
+            ref={settingsButton}
             onClick={() => setSettings(!settings)}
             aria-expanded={settings}
+            aria-controls={settingsId}
           >
             התאמות אישיות
           </button>
@@ -256,128 +261,136 @@ export function Access({
             {preferences.mode === "switch" ? scanLabel : ""}
           </span>
         </div>
-        {settings && (
-          <Panel>
-            <h2>איך נוח לי ללמוד?</h2>
-            <label>
-              דרך ההפעלה
-              <select
-                aria-label="דרך ההפעלה"
-                value={preferences.mode}
-                onChange={(e) =>
-                  setPreferences((p) => ({
-                    ...p,
-                    mode: e.target.value as Preferences["mode"],
-                  }))
-                }
-              >
-                <option value="standard">מגע, עכבר ומקלדת</option>
-                <option value="motor">כפתורים גדולים</option>
-                <option value="gaze">מצביע עיניים חיצוני</option>
-                <option value="switch">שני מתגים</option>
-              </select>
-            </label>
-            <p className="muted" aria-live="polite">
-              {preferences.mode === "standard" &&
-                "מקלדת חשבון קומפקטית למגע, לעכבר ולמקלדת רגילה."}
-              {preferences.mode === "motor" &&
-                "כפתורים גדולים בגודל 88 פיקסלים לפחות, לתנועה וללחיצה נוחות יותר."}
-              {preferences.mode === "gaze" &&
-                "כפתורים גדולים לשימוש עם מצביע עיניים חיצוני שמזיז את סמן העכבר. המחברת אינה מפעילה מצלמה ואינה עוקבת אחרי העיניים. בוחרים בנפרד מי מפעיל לחיצה בשהייה."}
-              {preferences.mode === "switch" &&
-                "כפתורים גדולים וסריקה באמצעות שני מתגים: רווח לקידום ו־Enter לבחירה."}
-            </p>
-            <label>
-              הפעלה בשהייה
-              <select
-                aria-label="הפעלה בשהייה"
-                value={preferences.dwellSource}
-                onChange={(e) =>
-                  setPreferences((p) => ({
-                    ...p,
-                    dwellSource: e.target.value as Preferences["dwellSource"],
-                  }))
-                }
-              >
-                <option value="off">כבויה</option>
-                <option value="app">המחברת מפעילה בשהייה</option>
-                <option value="device">המכשיר מפעיל בשהייה</option>
-              </select>
-            </label>
-            <p className="muted">
-              שהייה פועלת בנפרד מדרך ההפעלה. במצב ״המחברת״, השארת הסמן על כפתור
-              מפעילה אותו ללא לחיצה. כשמפעילים שהייה במכשיר, בוחרים כאן ״המכשיר״
-              כדי למנוע הפעלה כפולה. במצב ״כבויה״ לוחצים כרגיל.
-            </p>
-            {preferences.dwellSource === "app" && (
+        <div id={settingsId} hidden={!settings}>
+          {settings && (
+            <Panel className="access-settings">
+              <h2>איך נוח לי ללמוד?</h2>
               <label>
-                זמן שהייה: {preferences.dwellMs} מילישניות
-                <input
-                  type="range"
-                  min="800"
-                  max="1500"
-                  step="100"
-                  value={preferences.dwellMs}
+                דרך ההפעלה
+                <select
+                  aria-label="דרך ההפעלה"
+                  value={preferences.mode}
                   onChange={(e) =>
                     setPreferences((p) => ({
                       ...p,
-                      dwellMs: Number(e.target.value),
+                      mode: e.target.value as Preferences["mode"],
+                    }))
+                  }
+                >
+                  <option value="standard">מגע, עכבר ומקלדת</option>
+                  <option value="motor">כפתורים גדולים</option>
+                  <option value="gaze">מצביע עיניים חיצוני</option>
+                  <option value="switch">שני מתגים</option>
+                </select>
+              </label>
+              <p className="muted" aria-live="polite">
+                {preferences.mode === "standard" &&
+                  "מקלדת חשבון קומפקטית למגע, לעכבר ולמקלדת רגילה."}
+                {preferences.mode === "motor" &&
+                  "כפתורים גדולים בגודל 88 פיקסלים לפחות, לתנועה וללחיצה נוחות יותר."}
+                {preferences.mode === "gaze" &&
+                  "כפתורים גדולים לשימוש עם מצביע עיניים חיצוני שמזיז את סמן העכבר. המחברת אינה מפעילה מצלמה ואינה עוקבת אחרי העיניים. בוחרים בנפרד מי מפעיל לחיצה בשהייה."}
+                {preferences.mode === "switch" &&
+                  "כפתורים גדולים וסריקה באמצעות שני מתגים: רווח לקידום ו־Enter לבחירה."}
+              </p>
+              <label>
+                הפעלה בשהייה
+                <select
+                  aria-label="הפעלה בשהייה"
+                  value={preferences.dwellSource}
+                  onChange={(e) =>
+                    setPreferences((p) => ({
+                      ...p,
+                      dwellSource: e.target.value as Preferences["dwellSource"],
+                    }))
+                  }
+                >
+                  <option value="off">כבויה</option>
+                  <option value="app">המחברת מפעילה בשהייה</option>
+                  <option value="device">המכשיר מפעיל בשהייה</option>
+                </select>
+              </label>
+              <p className="muted">
+                שהייה פועלת בנפרד מדרך ההפעלה. במצב ״המחברת״, השארת הסמן על
+                כפתור מפעילה אותו ללא לחיצה. כשמפעילים שהייה במכשיר, בוחרים כאן
+                ״המכשיר״ כדי למנוע הפעלה כפולה. במצב ״כבויה״ לוחצים כרגיל.
+              </p>
+              {preferences.dwellSource === "app" && (
+                <label>
+                  זמן שהייה: {preferences.dwellMs} מילישניות
+                  <input
+                    type="range"
+                    min="800"
+                    max="1500"
+                    step="100"
+                    value={preferences.dwellMs}
+                    onChange={(e) =>
+                      setPreferences((p) => ({
+                        ...p,
+                        dwellMs: Number(e.target.value),
+                      }))
+                    }
+                  />
+                </label>
+              )}
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={preferences.spotlight}
+                  onChange={(e) =>
+                    setPreferences((p) => ({
+                      ...p,
+                      spotlight: e.target.checked,
                     }))
                   }
                 />
+                מיקוד בשאלה הפעילה
               </label>
-            )}
-            <label className="check">
-              <input
-                type="checkbox"
-                checked={preferences.spotlight}
-                onChange={(e) =>
-                  setPreferences((p) => ({ ...p, spotlight: e.target.checked }))
-                }
-              />
-              מיקוד בשאלה הפעילה
-            </label>
-            <p className="muted">
-              מיקוד בשאלה מחשיך את האזור שסביבה כדי לצמצם הסחות דעת. הוא אינו
-              מעקב עיניים ואינו משנה את דרך ההפעלה.
-            </p>
-            <label>
-              גודל טקסט
-              <select
-                value={preferences.fontScale}
-                onChange={(e) =>
-                  setPreferences((p) => ({
-                    ...p,
-                    fontScale: Number(e.target.value),
-                  }))
+              <p className="muted">
+                מיקוד בשאלה מוסיף מסגרת ברורה סביב התרגיל. הניווט והעזרה נשארים
+                גלויים וקריאים. הוא אינו מעקב עיניים ואינו משנה את דרך ההפעלה.
+              </p>
+              <label>
+                גודל טקסט
+                <select
+                  value={preferences.fontScale}
+                  onChange={(e) =>
+                    setPreferences((p) => ({
+                      ...p,
+                      fontScale: Number(e.target.value),
+                    }))
+                  }
+                >
+                  <option value="1">רגיל</option>
+                  <option value="1.25">גדול</option>
+                  <option value="1.5">גדול מאוד</option>
+                </select>
+              </label>
+              {preferences.mode === "switch" && (
+                <p>
+                  שני מתגים: רווח לקידום, Enter לבחירה. במקלדת בוחרים קודם שורת
+                  מקשים ואז מקש. Escape חוזר לקבוצות.
+                </p>
+              )}
+              <button
+                className="primary"
+                disabled={busy}
+                onClick={() =>
+                  run(async () => {
+                    setPreferences(
+                      await api("/preferences", "PUT", preferences),
+                    );
+                    setSettings(false);
+                    settingsButton.current?.focus();
+                  })
                 }
               >
-                <option value="1">רגיל</option>
-                <option value="1.25">גדול</option>
-                <option value="1.5">גדול מאוד</option>
-              </select>
-            </label>
-            {preferences.mode === "switch" && (
-              <p>
-                שני מתגים: רווח לקידום, Enter לבחירה. במקלדת בוחרים קודם שורת
-                מקשים ואז מקש. Escape חוזר לקבוצות.
-              </p>
-            )}
-            <button
-              className="primary"
-              disabled={busy}
-              onClick={() =>
-                run(async () => {
-                  setPreferences(await api("/preferences", "PUT", preferences));
-                  setSettings(false);
-                })
-              }
-            >
-              שמירת ההתאמות
-            </button>
-            <ErrorMessage error={error} />
-          </Panel>
-        )}
+                שמירת ההתאמות
+              </button>
+              <ErrorMessage error={error} />
+            </Panel>
+          )}
+        </div>
         {children}
       </div>
     </AccessContext.Provider>

@@ -17,10 +17,12 @@ export function MathAnswer({
         <textarea
           aria-label="התשובה שלי"
           dir={q.kind === "text" ? "rtl" : "ltr"}
+          rows={q.kind === "text" ? 3 : 2}
+          inputMode="text"
           value={answer.text}
           onFocus={() => onFocus()}
           onChange={(e) => onChange({ ...answer, text: e.target.value })}
-          placeholder="כאן אפשר לכתוב…"
+          placeholder={q.kind === "text" ? "כאן אפשר לכתוב…" : "0.5"}
         />
       </label>
     );
