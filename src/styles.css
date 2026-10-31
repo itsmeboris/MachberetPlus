@@ -1093,3 +1093,78 @@ audio {
     font-size: 1.4em;
   }
 }
+
+/* Teacher focus never intercepts input or changes personal preferences. */
+.teacher-focus-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  margin-block: 16px;
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  color: var(--ink);
+  background: var(--surface);
+}
+.teacher-focus-mask {
+  display: none;
+}
+html[data-teacher-focus="true"]:has(.question, .mission, .work-record)
+  .teacher-focus-mask {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgb(0 0 0 / 55%);
+  pointer-events: none;
+}
+html[data-teacher-focus="true"]
+  :is(
+    .question,
+    .mission,
+    .work-record,
+    .teacher-focus-banner,
+    .topbar,
+    .access-toolbar,
+    .access-settings,
+    .theme-menu,
+    .workbook > .actions,
+    .student-record-actions,
+    .aac,
+    .tabs,
+    .carousel-controls,
+    .empty
+  ) {
+  position: relative;
+  z-index: 21;
+  background: var(--surface);
+  color: var(--ink);
+}
+html[data-teacher-focus="true"] :is(.question, .mission, .work-record) {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+.classroom-focus {
+  margin-block: 24px;
+}
+.classroom-focus .student-row {
+  flex-wrap: wrap;
+}
+@media (forced-colors: active) {
+  html[data-teacher-focus="true"] .teacher-focus-mask {
+    display: none !important;
+  }
+  html[data-teacher-focus="true"] :is(.question, .mission, .work-record) {
+    outline-color: Highlight;
+  }
+}
+@media print {
+  .teacher-focus-banner,
+  .teacher-focus-mask {
+    display: none !important;
+  }
+  html[data-teacher-focus="true"] :is(.question, .mission, .work-record) {
+    outline: none;
+  }
+}

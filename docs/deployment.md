@@ -1,6 +1,6 @@
 # Persistent deployment
 
-The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All six migrations are applied. Current version: `1a8c25d8-fd1e-4440-b3eb-f94e84014dd1` (2026-10-31). Free on-device math handwriting recognition is now the default; this update required no database migration. The initial subdomain TLS provisioning delay resolved without changing application code. Verification details are in readiness.md.
+The worker is deployed at `https://machberet-pilot.machberet-pilot.workers.dev` with persistent D1 database `c91e9d2b-2687-4a3e-985e-def29d37600b`. All seven migrations are applied. Current version: `c1ea6bbb-8a7f-4453-ac49-c20c69f3d8df` (2026-10-31). This update adds per-student teacher-directed focus sessions; see teacher-focus.md. Free on-device math handwriting recognition remains the default. Verification details are in readiness.md.
 
 Source repository: https://github.com/itsmeboris/MachberetPlus.
 

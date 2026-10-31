@@ -10,6 +10,7 @@ import { pilot } from "./pilot";
 import { capture } from "./capture";
 import { recognition } from "./recognition";
 import { classrooms } from "./classrooms";
+import { focus } from "./focus";
 const app = new Hono<Env>();
 app.use("/api/*", async (c, next) => {
   c.header("Cache-Control", "no-store");
@@ -39,6 +40,7 @@ app.use("/api/*", async (c, next) => {
 });
 app.route("/api/students", students);
 app.route("/api/classrooms", classrooms);
+app.route("/api/focus", focus);
 app.route("/api/recognition", recognition);
 app.route("/api/assignments", assignments);
 app.route("/api/media", media);

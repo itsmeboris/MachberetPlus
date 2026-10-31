@@ -5,6 +5,7 @@ import { ErrorMessage, Panel, useAction } from "../components/Common";
 import { Capture } from "./capture/Capture";
 import { Review } from "./review/Review";
 import { Pilot } from "./pilot/Pilot";
+import { ClassroomFocus } from "./Focus";
 type Classroom = {
   id: string;
   name: string;
@@ -418,6 +419,7 @@ function ClassroomManager({
       </label>
       {room && (
         <>
+          <ClassroomFocus key={room.id} classroomId={room.id} />
           <p>
             מכינים משימה אחת ובוחרים כיתה במסך ההכנה. כל תלמיד מקבל עותק אישי עם
             תשובות ומשוב משלו.

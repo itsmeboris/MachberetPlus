@@ -1,8 +1,16 @@
 # Readiness evidence — 2026-10-31
 
+## Teacher-directed focus sessions
+
+Current deployed version: `c1ea6bbb-8a7f-4453-ac49-c20c69f3d8df`, migration 0007 applied. Teacher classroom controls start or stop a five-minute focus session for one student. Question/answer, help and navigation stay readable; background dims. Students can end focus, including offline; expiry and dismissal persistence are independent of answer saving and personal settings. Receipt is explicitly not an attention signal. See teacher-focus.md.
+
+Verification: 72 unit/API tests and production build passed. Both new browser scenarios passed locally and on deployed HTTPS, covering teacher/student interaction, uninterrupted typing, unchanged preferences, receipt/stop/dismiss, offline expiry, dismissal across reload, submitted-work navigation, three-theme axe scans and forced colors. Classroom distribution and two external-input regressions also passed locally. Live synthetic accounts were deleted. Independent review findings about read-only navigation and offline dismissal were fixed; phone screenshot visually inspected. Actual participant/eye-tracker hardware remains untested.
+
+A provider backup was exported before migration. Direct D1 local import failed due to exported table ordering; an isolated SQLite restore passed integrity and foreign-key checks. Private backup files remain outside Git.
+
 ## Original-brief audit and assistive spacing
 
-Current deployed version: `f71539cc-eb0d-4266-8d45-efe24ec501e5`. Corrected assistive keypad gaps to 20px while retaining 88px targets, reflowed narrow keyboards to avoid overflow, restored 64px standard tablet keys and preserved compact standard phone keys. Seven local access/keyboard/spacing checks, four live checks, production build, a new PDF page-selection/persistence test and current worker-restart persistence smoke passed. Synthetic accounts cleaned up; no schema changes.
+Previously deployed version: `f71539cc-eb0d-4266-8d45-efe24ec501e5`. Corrected assistive keypad gaps to 20px while retaining 88px targets, reflowed narrow keyboards to avoid overflow, restored 64px standard tablet keys and preserved compact standard phone keys. Seven local access/keyboard/spacing checks, four live checks, production build, a new PDF page-selection/persistence test and current worker-restart persistence smoke passed. Synthetic accounts cleaned up; no schema changes.
 
 See pilot-completion-audit.md for requirement-by-requirement evidence. Actual participant-device validation and field outcomes remain unproven; software acceptance alone does not close the original goal.
 

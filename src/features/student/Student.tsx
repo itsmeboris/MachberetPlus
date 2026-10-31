@@ -283,10 +283,12 @@ function Workbook({
   if (!editable)
     return (
       <>
-        <button onClick={onBack}>→ חזרה למשימות</button>
+        <div className="student-record-actions">
+          <button onClick={onBack}>→ חזרה למשימות</button>
+        </div>
         <WorkRecord assignment={a} />
         {a.status === "submitted" && Object.keys(a.feedback).length === 0 ? (
-          <Panel>
+          <Panel className="student-record-actions">
             <p>
               אפשר לחזור ולתקן כל עוד המורה לא התחיל לבדוק. לאחר התיקון מגישים
               שוב.

@@ -6,6 +6,7 @@ import { Teacher } from "./features/Teacher";
 import { Student } from "./features/student/Student";
 import { Parent } from "./features/parent/Parent";
 import { Access } from "./accessibility/Access";
+import { StudentFocus } from "./features/Focus";
 import { ParentCapture } from "./features/parent/ParentCapture";
 export function App() {
   const [user, setUser] = useState<User | null>(null),
@@ -68,6 +69,7 @@ export function App() {
           <Teacher />
         ) : (
           <Access user={user}>
+            <StudentFocus key={user.id} userId={user.id} />
             <Student user={user} />
           </Access>
         )}
