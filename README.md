@@ -29,6 +29,8 @@ The shared accessible design covers teacher, student and parent screens, with st
 
 Warm cream is the default. Students can open **צבעי המסך** in the toolbar to choose **קרם חמים**, **כחול בהיר**, or **כהה**. Choices save automatically per student; **החזרת צבעי ברירת המחדל** restores cream without changing other accessibility settings. The menu marks the selected theme with text and a pressed state, provides large labeled choices, and supports close/Escape with focus restoration.
 
+For the planned Windows eye-gaze setup, see [OptiKey and Tobii Eye Tracker 5 compatibility, settings and acceptance checks](docs/optikey-tobii-setup.md). The app receives ordinary mouse/keyboard input; physical tracker compatibility remains unverified. OptiKey's current guidance distinguishes Classic v3 from v4 support for this tracker.
+
 ```powershell
 npm test
 npm run build
