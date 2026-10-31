@@ -1,4 +1,4 @@
-﻿# Execution ledger
+# Execution ledger
 
 Plan: docs/superpowers/plans/2026-10-30-machberet-pilot.md. Scope: docs/pilot-brief.txt.
 
@@ -38,3 +38,6 @@ Verified 70 unit/API tests, 24 local browser tests (one optional private-photo O
 Implemented cream default, pale blue/dark slate options and a visible student toolbar menu with large labeled choices, selected state, immediate save, reset and close. Atomic actor-scoped theme patch preserves other preferences. Failed saves roll back visibly. Review found disabled-trigger focus and stale loading races; both resolved and tested.
 
 70 unit/API tests, 25 browser tests (one optional private-photo OCR skipped), build and seven targeted final browser checks passed. Eight live scenarios passed on `6d29c425-9d89-40ac-99d2-bb0e661c1c01`; synthetic data cleaned up. No database migration. Screenshots: artifacts/theme-*-mobile.png. Theme choice is personal presentation, not a diagnosis-based treatment; physical device/participant testing remains outstanding.
+## Original-brief completion audit
+
+The previous theme turn made verified progress. Re-read the full attached brief and created pilot-completion-audit.md covering requirements, later user amendments, evidence and field gaps. Found and corrected 6px assistive key spacing; now 20px with 88px targets, narrow reflow and 48px primary submission edge clearance. Standard tablet keys 64px; compact phone keys preserved. Seven local and four live spacing/access/keyboard checks, build, new PDF selected-page persistence test and fresh restart smoke passed. Deployed f71539cc-eb0d-4266-8d45-efe24ec501e5. Actual participant Android/gaze/switch access and operator results are missing; requested them via asynchronous question. Goal remains active, not claimed complete. Blocker audit first explicit turn; meaningful software/evidence progress was made.

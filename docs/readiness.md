@@ -1,8 +1,14 @@
 # Readiness evidence — 2026-10-31
 
-## Student theme menu update
+## Original-brief audit and assistive spacing
 
-Current deployed version: `6d29c425-9d89-40ac-99d2-bb0e661c1c01`. Warm cream default plus pale blue/dark slate, a direct student toolbar menu, immediate per-student saving and a reset that preserves other settings. Readable state/focus/error palettes and forced-color/print overrides included. Independent review's save-focus and delayed-load races fixed and regression-tested.
+Current deployed version: `f71539cc-eb0d-4266-8d45-efe24ec501e5`. Corrected assistive keypad gaps to 20px while retaining 88px targets, reflowed narrow keyboards to avoid overflow, restored 64px standard tablet keys and preserved compact standard phone keys. Seven local access/keyboard/spacing checks, four live checks, production build, a new PDF page-selection/persistence test and current worker-restart persistence smoke passed. Synthetic accounts cleaned up; no schema changes.
+
+See pilot-completion-audit.md for requirement-by-requirement evidence. Actual participant-device validation and field outcomes remain unproven; software acceptance alone does not close the original goal.
+
+## Earlier student theme menu update
+
+Previously deployed version: `6d29c425-9d89-40ac-99d2-bb0e661c1c01`. Warm cream default plus pale blue/dark slate, a direct student toolbar menu, immediate per-student saving and a reset that preserves other settings. Readable state/focus/error palettes and forced-color/print overrides included. Independent review's save-focus and delayed-load races fixed and regression-tested.
 
 Verification: 70 unit/API tests, 25 local browser tests (one optional private-photo test skipped), build, seven targeted browser checks after the final focus/loading fixes, and eight final live scenarios passed. Live checks cover theme persistence/reset/failure recovery, contrast, keyboard/mobile input and the worksheet-to-parent workflow. Synthetic accounts deleted; no migration. Actual Android/TalkBack participant testing and initial cream flash before authentication remain documented limitations.
 

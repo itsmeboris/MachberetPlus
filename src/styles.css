@@ -790,6 +790,7 @@ audio {
 }
 .keyboard-groups {
   --key-target: 88px;
+  container-type: inline-size;
   display: grid;
   gap: 6px;
   margin: 16px auto;
@@ -797,6 +798,28 @@ audio {
 }
 .access-root[data-access-mode="standard"] .keyboard-groups {
   --key-target: 48px;
+}
+@media (min-width: 600px) {
+  .access-root[data-access-mode="standard"] .keyboard-groups {
+    --key-target: 64px;
+  }
+}
+.access-root:not([data-access-mode="standard"])
+  :is(
+    .keyboard-groups,
+    .keyboard-row,
+    .keyboard-symbols,
+    .actions,
+    .access-toolbar,
+    .workbook-toolbar,
+    .question-nav
+  ) {
+  gap: 20px;
+}
+@container (max-width: 303px) {
+  .access-root:not([data-access-mode="standard"]) .keyboard-row {
+    grid-template-columns: repeat(2, minmax(88px, 1fr));
+  }
 }
 .keyboard-groups button {
   min-width: var(--key-target);
@@ -973,6 +996,11 @@ audio {
   }
   .question {
     padding: 6px;
+  }
+}
+@media (max-width: 600px) {
+  .access-root:not([data-access-mode="standard"]) .question {
+    padding-inline: 36px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
